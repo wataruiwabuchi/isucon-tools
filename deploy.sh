@@ -2,8 +2,6 @@
 set -ex
 export PATH=$HOME/local/go/bin:$PATH
 
-cp /home/isucon/isucon7-qualify-go/src/isubata/app.go /home/isucon/isubata/webapp/go/src/isubata/app.go
-
 GITHOME=`cd $(dirname "${0}") && cd .. && pwd`
 
 LOG_FILES=(
