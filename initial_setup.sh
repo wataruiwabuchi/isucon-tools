@@ -39,7 +39,9 @@ sudo mysqldump -x --all-databases > ${BACKUP_DIR}/backup.dump
 #      そもそもsshできないとファイルを配置することもできない
 #      この項目自体が必要ないかもしれない
 AUTHORIZED_KEYS_PATH=${HOME}/.ssh/authorized_keys
-rm ${AUTHORIZED_KEYS_PATH} && touch ${AUTHORIZED_KEYS_PATH}
+mkdir -p $( dirname ${AUTHORIZED_KEYS_PATH} )
+test -e ${AUTHORIZED_KEYS_PATH} && rm ${AUTHORIZED_KEYS_PATH}
+touch ${AUTHORIZED_KEYS_PATH}
 chmod 600 ${AUTHORIZED_KEYS_PATH}
 for github_account in ${GITHUB_ACCOUNTS[@]}
 do
