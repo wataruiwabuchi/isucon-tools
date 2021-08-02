@@ -1,38 +1,16 @@
-#!/bin/bash
-set -eux
 # ISUCON開始時に最初に起動するスクリプト
 # ISUCON用のリポジトリのトップレベルに最初から配置されていることを想定
 
 APP_SERVERS=(
-    localhost
+    isucon9-qualify-app2
+    isucon9-qualify-app3
 )
 
 GITHUB_ACCOUNTS=(
     wataruiwabuchi
 )
 
-# 複数台構成において中身が共通しているもの
-COMMON_PATHS=(
-    /etc/nginx/nginx.conf
-    /etc/mysql/mysql.conf.d/mysqld.cnf
-    /home/isucon/isubata/webapp/python/app.py
-)
-# 複数台構成においてサーバごとに別のファイルにする可能性があるもの
-UNCOMMON_PATHS=(
-    /etc/nginx/sites-available/nginx.conf
-    $HOME/env.sh
-)
-
-BACKUP_DIR=/var/backup
-BACKUP_TARGETS=(
-    ${HOME}
-    /etc
-)
-
-# 初期バックアップの取得
-sudo mkdir -p ${BACKUP_DIR} && sudo chown -R isucon:isucon ${BACKUP_DIR}
-sudo tar cvzf ${BACKUP_DIR}/backup.tar.gz ${BACKUP_TARGETS[@]} && sudo chown isucon:isucon ${BACKUP_DIR}/backup.tar.gz
-sudo mysqldump -x --all-databases > ${BACKUP_DIR}/backup.dump
+source ./deployed_file_paths.sh
 
 # githubから取得した公開鍵をauthorized_keysに配置
 # TODO 他サーバの考慮をどうするか
@@ -52,6 +30,16 @@ done
 for github_account in ${GITHUB_ACCOUNTS[@]}
 do
     mkdir -p ${HOME}/workspaces/${github_account}
+done
+
+# リポジトリを各サーバに配置
+for app_server in ${APP_SERVERS[@]}
+do
+    if [ $( hostname ) = ${app_server} ]; then continue; fi
+    git_top_path=$( git rev-parse --show-toplevel )
+    ssh isucon@${app_server} "rm -rf ${git_top_path}"
+    scp -r ${git_top_path} isucon@${app_server}:$( dirname ${git_top_path} )
+    ssh isucon@${app_server} "cd ${git_top_path}; git reset --hard; git clean -fd"
 done
 
 # リポジトリに必要なファイルを配置
