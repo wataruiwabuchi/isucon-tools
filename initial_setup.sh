@@ -56,6 +56,11 @@ do
     done
 done
 
+# 必要なツールをインストール
+sudo apt-add-repository ppa:fish-shell/release-3 -y
+sudo apt-get update
+sudo apt-get install -y fish
+
 # vimrcとtmux.confの配置
 wget -P $HOME https://raw.githubusercontent.com/wataruiwabuchi/vim_config/master/.vimrc -O $HOME/.vimrc
 wget -P $HOME https://raw.githubusercontent.com/wataruiwabuchi/tmux_config/master/.tmux.conf -O $HOME/.tmux.conf
