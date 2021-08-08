@@ -71,9 +71,17 @@ do
 done
 
 # 必要なツールをインストール
-sudo apt-add-repository ppa:fish-shell/release-3 -y
-sudo apt-get update
-sudo apt-get install -y fish
+for app_server in ${APP_SERVERS[@]}
+do
+    ssh isucon@${app_server} 'sudo apt-add-repository ppa:fish-shell/release-3 -y; sudo apt-get update; sudo apt-get install -y fish'
+    ssh isucon@${app_server} 'sudo apt-get install -y glances'
+done
+
+# デフォルトシェルの変更
+for app_server in ${APP_SERVERS[@]}
+do
+    ssh isucon@${app_server} 'sudo chsh -s /usr/bin/fish isucon'
+done
 
 # vimrcとtmux.confの配置
 wget -P $HOME https://raw.githubusercontent.com/wataruiwabuchi/vim_config/master/.vimrc -O $HOME/.vimrc
