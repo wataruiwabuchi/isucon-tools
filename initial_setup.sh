@@ -64,7 +64,7 @@ do
 done
 for uncommon_path in ${UNCOMMON_PATHS[@]}
 do
-    for app_server in ${APP_SERVERS}
+    for app_server in ${APP_SERVERS[@]}
     do
         sudo cp -a ${uncommon_path} ./$( basename ${uncommon_path} ).${app_server}
     done
