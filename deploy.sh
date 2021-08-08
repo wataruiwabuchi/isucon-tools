@@ -12,16 +12,17 @@ SERVERS=(
     $( hostname )
 )
 
+APP_PROFILE_DIR=/home/isucon/profile
 LOG_FILES=(
     /var/log/mysql/mysql-slow.log
-    /var/log/mysql/access.log
-    /var/log/mysql/error.log
+    /var/log/nginx/access.log
+    /var/log/nginx/error.log
 )
 
 SERVICES=(
     nginx
     mysql
-    isucari.python
+    isuumo.python
 )
 
 DATE=$( date --iso-8601=seconds )
@@ -40,6 +41,8 @@ do
         ssh isucon@${server} "sudo test -f ${LOG_FILE} && sudo mv ${LOG_FILE} ${LOG_FILE}.${DATE} || echo 1"
     done
 
+    mkdir -p ${APP_PROFILE_DIR}
+
     # locate file
     for common_path in ${COMMON_PATHS[@]}
     do
@@ -52,4 +55,5 @@ do
 
     # Restart services
     ssh isucon@${server} sudo systemctl restart "${SERVICES[@]}"
+
 done
