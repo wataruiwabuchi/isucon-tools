@@ -66,10 +66,10 @@ do
     ssh isucon@${app_server} 'sudo apt-get install -y glances fish percona-toolkit'
 done
 
-# デフォルトシェルの変更
+# fish を起動する設定
 for app_server in ${APP_SERVERS[@]}
 do
-    ssh isucon@${app_server} 'sudo chsh -s /usr/bin/fish isucon'
+    ssh isucon@${app_server} 'echo exec fish > ~/.bash_profile'
 done
 
 # vimrcとtmux.confの配置
