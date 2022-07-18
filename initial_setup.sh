@@ -64,7 +64,7 @@ done
 for app_server in ${APP_SERVERS[@]}
 do
     # 古めの問題だとデフォルトでfishの3系が入ってくれなかったので追加
-    ssh isucon@${app_server} 'sudo apt-add-repository ppa:fish-shell/release-3'
+    ssh isucon@${app_server} 'sudo apt-add-repository -y ppa:fish-shell/release-3'
     ssh isucon@${app_server} 'sudo apt update'
     ssh isucon@${app_server} 'sudo apt-get install -y glances fish percona-toolkit'
 done
