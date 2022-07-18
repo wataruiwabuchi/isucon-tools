@@ -73,8 +73,7 @@ done
 # 必要なツールをインストール
 for app_server in ${APP_SERVERS[@]}
 do
-    ssh isucon@${app_server} 'sudo apt-add-repository ppa:fish-shell/release-3 -y; sudo apt-get update; sudo apt-get install -y fish'
-    ssh isucon@${app_server} 'sudo apt-get install -y glances'
+    ssh isucon@${app_server} 'sudo apt-get install -y glances fish'
 done
 
 # デフォルトシェルの変更
