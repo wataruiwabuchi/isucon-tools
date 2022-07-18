@@ -9,11 +9,6 @@ set -eux
 GIT_TOP_PATH=$( git rev-parse --show-toplevel )
 
 APP_PROFILE_DIR=/home/isucon/profile
-LOG_FILES=(
-    /var/log/mysql/mysql-slow.log
-    /var/log/nginx/access.log
-    /var/log/nginx/error.log
-)
 
 DATE=$( date --iso-8601=seconds )
 
