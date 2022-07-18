@@ -34,3 +34,4 @@ SERVICES=(
     isucondition.go
 )
 
+APP_DIR=$HOME/webapp/go

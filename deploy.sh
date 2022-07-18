@@ -38,6 +38,10 @@ do
         rsync -auvz -e ssh --rsync-path='sudo rsync' $( basename ${uncommon_path} ).${server} isucon@${server}:${uncommon_path}
     done
 
+    # build app
+    ssh isucon@${server} "cd ${APP_DIR} && ~/local/go/bin/go build"
+    
+
     # Restart services
     ssh isucon@${server} sudo systemctl restart "${SERVICES[@]}"
 
