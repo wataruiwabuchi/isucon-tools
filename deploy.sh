@@ -8,10 +8,6 @@ set -eux
 
 GIT_TOP_PATH=$( git rev-parse --show-toplevel )
 
-SERVERS=(
-    $( hostname )
-)
-
 APP_PROFILE_DIR=/home/isucon/profile
 LOG_FILES=(
     /var/log/mysql/mysql-slow.log
@@ -19,17 +15,11 @@ LOG_FILES=(
     /var/log/nginx/error.log
 )
 
-SERVICES=(
-    nginx
-    mysql
-    isuumo.python
-)
-
 DATE=$( date --iso-8601=seconds )
 
-source ./deployed_file_paths.sh
+source ./env.sh
 
-for server in ${SERVERS[@]}
+for server in ${APP_SERVERS[@]}
 do
     # Update git                                                                                                                                                                                                                                 # git checkout master
     # git stash

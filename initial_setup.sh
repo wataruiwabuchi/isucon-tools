@@ -2,16 +2,6 @@
 # ISUCON開始時に最初に起動するスクリプト
 # ISUCON用のリポジトリのトップレベルに最初から配置されていることを想定
 
-APP_SERVERS=(
-    isucon10-qualify-app1
-    isucon10-qualify-app2
-    isucon10-qualify-app3
-)
-
-GITHUB_ACCOUNTS=(
-    wataruiwabuchi
-)
-
 BACKUP_DIR=/var/backup
 MYSQL_DUMP_PATH=${BACKUP_DIR}/backup.dump
 BACKUP_TARGETS=(
@@ -20,7 +10,7 @@ BACKUP_TARGETS=(
     ${BACKUP_DUMP_PATH}
 )
 
-source ./deployed_file_paths.sh
+source ./env.sh
 
 # 初期バックアップの取得
 # sudo mkdir -p ${BACKUP_DIR} && sudo chown -R isucon:isucon ${BACKUP_DIR}
