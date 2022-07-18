@@ -63,7 +63,7 @@ done
 # 必要なツールをインストール
 for app_server in ${APP_SERVERS[@]}
 do
-    ssh isucon@${app_server} 'sudo apt-get install -y glances fish'
+    ssh isucon@${app_server} 'sudo apt-get install -y glances fish percona-toolkit'
 done
 
 # デフォルトシェルの変更
