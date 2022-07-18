@@ -41,7 +41,6 @@ do
     # build app
     ssh isucon@${server} "cd ${APP_DIR} && ~/local/go/bin/go build"
     
-
     # Restart services
     ssh isucon@${server} sudo systemctl restart "${SERVICES[@]}"
 
