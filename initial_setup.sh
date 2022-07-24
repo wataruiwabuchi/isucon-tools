@@ -38,9 +38,9 @@ do
 done
 
 # リポジトリを各サーバに配置
-for app_server in ${APP_SERVERS[@]}
+for (( i=1; i<${#APP_SERVERS[@]}; i++ ));
 do
-    if [ $( hostname ) = ${app_server} ]; then continue; fi
+    app_server=${APP_SERVERS[${i}]}
     git_top_path=$( git rev-parse --show-toplevel )
     ssh isucon@${app_server} "rm -rf ${git_top_path}"
     scp -r ${git_top_path} isucon@${app_server}:$( dirname ${git_top_path} )

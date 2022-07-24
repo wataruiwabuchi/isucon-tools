@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -eux
 
+# 先頭はgitリポジトリの配置はスキップ
 APP_SERVERS=(
     isucon11-qualify-standalone-1
 )
