@@ -7,7 +7,7 @@ SENDED_COMMANDS=(
   #"ssh image1"
   "cd /home/isucon/isubata/webapp/go"
 )
-WINDOW_NAMES=("bench" "app" "alp" "slow-query" "wlreporter")
+WINDOW_NAMES=("glances" "nginx" "mysql" "app")
 
 tmux new-session -d  -s $SESSION_NAME
 
