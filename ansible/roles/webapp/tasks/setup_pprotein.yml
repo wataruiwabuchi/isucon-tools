@@ -1,0 +1,77 @@
+---
+# NOTE 9000 番で起動
+- become: yes
+  vars:
+    pprotein_version: "1.2.3"
+    pprotein_url: "https://github.com/kaz/pprotein/releases/download/v{{ pprotein_version }}/pprotein_{{ pprotein_version }}_linux_amd64.tar.gz"
+    pprotein_install_path: "/usr/local/bin"
+
+  block:
+    - name: Download PProtein
+      get_url:
+        url: "{{ pprotein_url }}"
+        dest: "/tmp/pprotein.tar.gz"
+        mode: "0644"
+
+    - name: Extract PProtein
+      unarchive:
+        src: "/tmp/pprotein.tar.gz"
+        dest: "{{ pprotein_install_path }}"
+        remote_src: yes
+
+    - name: Create PProtein service file
+      copy:
+        content: |
+          [Unit]
+          Description=pprotein service
+
+          [Service]
+          ExecStart={{ pprotein_install_path }}/pprotein
+          WorkingDirectory={{ pprotein_install_path }}
+          Environment=PATH=$PATH:/usr/local/bin
+          Restart=always
+          User=root
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: "/etc/systemd/system/pprotein.service"
+        mode: "0644"
+
+    - name: Create PProtein agent service file
+      copy:
+        content: |
+          [Unit]
+          Description=pprotein-agent service
+
+          [Service]
+          ExecStart={{ pprotein_install_path }}/pprotein-agent
+          WorkingDirectory={{ pprotein_install_path }}
+          Environment=PATH=$PATH:/usr/local/bin
+          Restart=always
+          User=root
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: "/etc/systemd/system/pprotein-agent.service"
+        mode: "0644"
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Start PProtein service
+      systemd:
+        name: pprotein
+        state: started
+        enabled: yes
+
+    - name: Start PProtein agent service
+      systemd:
+        name: pprotein-agent
+        state: started
+        enabled: yes
+
+    - name: Clean up downloaded archive
+      file:
+        path: "/tmp/pprotein.tar.gz"
+        state: absent

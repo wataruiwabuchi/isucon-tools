@@ -1,0 +1,26 @@
+---
+- name: Ensure .ssh directory exists
+  file:
+    path: "/home/{{ target_user }}/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+
+- name: Fetch GitHub SSH keys
+  uri:
+    url: "https://github.com/{{ item }}.keys"
+    return_content: yes
+  loop: "{{ github_users }}"
+  register: github_keys
+
+- name: Add keys to authorized_keys
+  lineinfile:
+    path: "/home/{{ target_user }}/.ssh/authorized_keys"
+    line: "{{ item.content }}"
+    create: yes
+    mode: "0600"
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+  loop: "{{ github_keys.results }}"
+  when: item.content | length > 0

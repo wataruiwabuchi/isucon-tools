@@ -1,0 +1,33 @@
+---
+- become: yes # sudo権限を使用
+  vars:
+    slp_url: "https://github.com/tkuchiki/slp/releases/latest/download/slp_linux_amd64.tar.gz"
+    download_path: "/tmp"
+
+  block:
+    - name: Download SLP archive
+      get_url:
+        url: "{{ slp_url }}"
+        dest: "{{ download_path }}/slp_linux_amd64.tar.gz"
+        mode: "0644"
+
+    - name: Extract SLP archive
+      unarchive:
+        src: "{{ download_path }}/slp_linux_amd64.tar.gz"
+        dest: "{{ download_path }}"
+        remote_src: yes
+
+    - name: Move SLP binary to /usr/local/bin
+      copy:
+        src: "{{ download_path }}/slp"
+        dest: "/usr/local/bin/slp"
+        mode: "0755"
+        remote_src: yes
+
+    - name: Clean up downloaded files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ download_path }}/slp_linux_amd64.tar.gz"
+        - "{{ download_path }}/slp"

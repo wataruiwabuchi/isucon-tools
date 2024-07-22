@@ -1,12 +1,10 @@
 ---
-- name: Install Redis on all servers
-  hosts: web:db # アプリケーションサーバーとデータベースサーバーの両方に適用
-  become: yes  # sudo権限を使用
-  tasks:
+- become: yes # sudo権限を使用
+  block:
     - name: Update apt cache
       apt:
         update_cache: yes
-      
+
     - name: Install Redis
       apt:
         name: redis-server
@@ -22,28 +20,26 @@
       lineinfile:
         path: /etc/redis/redis.conf
         regexp: '^bind 127\.0\.0\.1'
-        line: 'bind 0.0.0.0'
+        line: "bind 0.0.0.0"
       notify: Restart Redis
 
     - name: Set Redis maxmemory
       lineinfile:
         path: /etc/redis/redis.conf
-        regexp: '^# maxmemory <bytes>'
-        line: 'maxmemory 256mb'
+        regexp: "^# maxmemory <bytes>"
+        line: "maxmemory 256mb"
       notify: Restart Redis
 
     - name: Set Redis maxmemory-policy
       lineinfile:
         path: /etc/redis/redis.conf
-        regexp: '^# maxmemory-policy noeviction'
-        line: 'maxmemory-policy allkeys-lru'
+        regexp: "^# maxmemory-policy noeviction"
+        line: "maxmemory-policy allkeys-lru"
       notify: Restart Redis
 
-  handlers:
-    - name: Restart Redis
-      systemd:
-        name: redis-server
-        state: restarted
-
-## 使用方法
-# ansible-playbook -i inventory.ini install_redis.yml
+  # TODO handlers はここにはおけなさそう、 deploy スクリプトとか bench スクリプトに置くべきかもしれない
+  # handlers:
+  #   - name: Restart Redis
+  #     systemd:
+  #       name: redis-server
+  #       state: restarted

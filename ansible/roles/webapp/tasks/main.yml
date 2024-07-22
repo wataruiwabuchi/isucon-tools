@@ -1,0 +1,18 @@
+---
+- name: Tasks for add_github_ssh_keys
+  include_tasks: add_github_ssh_keys.yml
+
+- name: Tasks for install_redis.yml
+  include_tasks: install_redis.yml
+
+- name: Tasks for install_alp
+  include_tasks: install_alp.yml
+
+- name: Tasks for install_slp
+  include_tasks: install_slp.yml
+
+- name: Tasks for setup_pprotein
+  include_tasks: setup_pprotein.yml
+
+- name: Tasks for install_graphviz
+  include_tasks: install_graphviz.yml

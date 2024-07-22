@@ -1,0 +1,25 @@
+---
+- become: yes # sudo権限を使用
+
+  block:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Graphviz and GV
+      apt:
+        name:
+          - graphviz
+          - gv
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Verify Graphviz installation
+      command: dot -V
+      register: graphviz_version
+      changed_when: false
+
+    - name: Display Graphviz version
+      debug:
+        var: graphviz_version.stderr_lines

@@ -1,0 +1,41 @@
+---
+- become: yes # sudo権限を使用
+  vars:
+    alp_url: "https://github.com/tkuchiki/alp/releases/latest/download/alp_linux_amd64.tar.gz"
+    download_path: "/tmp"
+
+  block:
+    - name: Download ALP archive
+      get_url:
+        url: "{{ alp_url }}"
+        dest: "{{ download_path }}/alp_linux_amd64.tar.gz"
+        mode: "0644"
+
+    - name: Extract ALP archive
+      unarchive:
+        src: "{{ download_path }}/alp_linux_amd64.tar.gz"
+        dest: "{{ download_path }}"
+        remote_src: yes
+
+    - name: Move ALP binary to /usr/local/bin
+      copy:
+        src: "{{ download_path }}/alp"
+        dest: "/usr/local/bin/alp"
+        mode: "0755"
+        remote_src: yes
+
+    - name: Clean up downloaded files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ download_path }}/alp_linux_amd64.tar.gz"
+        - "{{ download_path }}/alp"
+
+    - name: Verify ALP installation
+      command: alp --version
+      register: alp_version_output
+
+    - name: Display ALP version
+      debug:
+        var: alp_version_output.stdout
