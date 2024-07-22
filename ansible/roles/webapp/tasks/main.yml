@@ -1,4 +1,6 @@
 ---
+# TODO initial_setup.sh を見ながら追加したほうがよさそうな処理を追加
+
 - name: Tasks for add_github_ssh_keys
   include_tasks: add_github_ssh_keys.yml
 
