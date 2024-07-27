@@ -1,0 +1,26 @@
+---
+all:
+  children:
+    web:
+      hosts:
+        web1:
+          ansible_host: 35.72.3.48
+    db:
+      hosts: {}
+  vars:
+    ansible_user: isucon
+
+    # 収集および配布するファイルのリスト
+    managed_files:
+      - /etc/nginx/nginx.conf
+
+    # ローカルでの収集ファイルの保存先
+    local_collection_path: "{{ playbook_dir }}/collected_files"
+
+    # ファイルのデフォルトモード
+    default_file_mode: '0644'
+    default_dir_mode: '0755'
+
+    # アプリケーション関連の変数
+    app_name: your_app
+    service_name: your_app_service
