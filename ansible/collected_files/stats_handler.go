@@ -234,19 +234,36 @@ func getLivestreamStatisticsHandler(c echo.Context) error {
 
 	// ランク算出
 	var ranking LivestreamRanking
+	reactionCounts := make(map[int64]int64)
+	rows, err := tx.QueryContext(ctx, "SELECT livestream_id, COUNT(reactions.id) AS reaction_count FROM reactions GROUP BY livestream_id")
+	if err != nil {
+	    return echo.NewHTTPError(http.StatusInternalServerError, "failed to fetch reaction counts: "+err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+	    var livestreamID, reactionCount int64
+	    if err := rows.Scan(&livestreamID, &reactionCount); err != nil {
+	        return echo.NewHTTPError(http.StatusInternalServerError, "failed to scan reaction count: "+err.Error())
+	    }
+	    reactionCounts[livestreamID] = reactionCount
+	}
+	tipSums := make(map[int64]int64)
+	rows, err = tx.QueryContext(ctx, "SELECT livestream_id, IFNULL(SUM(livecomments.tip), 0) FROM livecomments group by livestream_id")
+	if err != nil {
+	    return echo.NewHTTPError(http.StatusInternalServerError, "failed to fetch reaction counts: "+err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+	    var livestreamID, tipSum int64
+	    if err := rows.Scan(&livestreamID, &tipSum); err != nil {
+	        return echo.NewHTTPError(http.StatusInternalServerError, "failed to scan reaction count: "+err.Error())
+	    }
+	    tipSums[livestreamID] = tipSum
+	}
 	for _, livestream := range livestreams {
-		var reactions int64
-		// TODO join する必要なくね？単に livestream ごとのリアクション数を join すればよさそう
-		if err := tx.GetContext(ctx, &reactions, "SELECT COUNT(*) FROM livestreams l INNER JOIN reactions r ON l.id = r.livestream_id WHERE l.id = ?", livestream.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions: "+err.Error())
-		}
-
-		var totalTips int64
-		if err := tx.GetContext(ctx, &totalTips, "SELECT IFNULL(SUM(l2.tip), 0) FROM livestreams l INNER JOIN livecomments l2 ON l.id = l2.livestream_id WHERE l.id = ?", livestream.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to count tips: "+err.Error())
-		}
-
-		score := reactions + totalTips
+		reactions := reactionCounts[livestream.ID]
+		totalTips := tipSums[livestream.ID]
+		score := int64(reactions) + totalTips
 		ranking = append(ranking, LivestreamRankingEntry{
 			LivestreamID: livestream.ID,
 			Score:        score,
