@@ -1,0 +1,20 @@
+---
+- name: Ensure local collection directory exists
+  file:
+    path: "{{ local_collection_path }}"
+    state: directory
+    mode: "{{ default_dir_mode }}"
+  delegate_to: localhost
+
+- name: Collect files from remote servers
+  fetch:
+    src: "{{ item }}"
+    dest: "{{ local_collection_path }}/"
+    flat: yes
+  loop: "{{ managed_files }}"
+
+- name: Display collected files
+  debug:
+    msg: "Collected file: {{ item }}"
+  loop: "{{ managed_files }}"
+  delegate_to: localhost

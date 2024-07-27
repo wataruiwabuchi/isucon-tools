@@ -1,0 +1,20 @@
+---
+- name: Ensure destination directories exist
+  file:
+    path: "{{ item | dirname }}"
+    state: directory
+    mode: "{{ default_dir_mode }}"
+  loop: "{{ managed_files }}"
+
+- name: Deploy files to their destinations
+  copy:
+    src: "{{ local_collection_path }}/{{ item | basename }}"
+    dest: "{{ item }}"
+    mode: "{{ default_file_mode }}"
+  loop: "{{ managed_files }}"
+
+- name: Restart related services
+  systemd:
+    name: "{{ service_name }}"
+    state: restarted
+  when: service_name is defined
