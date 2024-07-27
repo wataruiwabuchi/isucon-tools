@@ -18,8 +18,8 @@ all:
       - /etc/mysql/mysql.conf.d/mysqld.cnf
       - /etc/systemd/system/isupipe-go.service
       - /home/isucon/env.sh
-      - /home/isucon/go.mod
-      - /home/isucon/go.sum
+      - /home/isucon/webapp/go/go.mod
+      - /home/isucon/webapp/go/go.sum
       - /home/isucon/webapp/go/livecomment_handler.go
       - /home/isucon/webapp/go/livestream_handler.go
       - /home/isucon/webapp/go/main.go
