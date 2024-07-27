@@ -9,6 +9,7 @@ import (
 	"errors"
 	"net/http"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -400,9 +401,39 @@ func verifyUserSession(c echo.Context) error {
 	return nil
 }
 
+// themeCache はユーザーIDをキーとし、ThemeModelを値とするマップです
+var themeCache = struct {
+    sync.RWMutex
+    m map[int64]ThemeModel
+}{m: make(map[int64]ThemeModel)}
+
+// GetUserTheme はユーザーのテーマを取得します。キャッシュがあればそれを返し、なければDBから取得してキャッシュします
+func getUserTheme(ctx context.Context, tx *sqlx.Tx, userID int64) (ThemeModel, error) {
+    // まずキャッシュをチェック
+    themeCache.RLock()
+    if theme, ok := themeCache.m[userID]; ok {
+        themeCache.RUnlock()
+        return theme, nil
+    }
+    themeCache.RUnlock()
+
+    // キャッシュになければDBから取得
+    var theme ThemeModel
+    if err := tx.GetContext(ctx, &theme, "SELECT * FROM themes WHERE user_id = ?", userID); err != nil {
+        return ThemeModel{}, echo.NewHTTPError(http.StatusInternalServerError, "failed to get user theme: "+err.Error())
+    }
+
+    // 取得したテーマをキャッシュに保存
+    themeCache.Lock()
+    themeCache.m[userID] = theme
+    themeCache.Unlock()
+
+    return theme, nil
+}
+
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	themeModel := ThemeModel{}
-	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
+	themeModel, err := getUserTheme(ctx, tx, userModel.ID)
+	if err != nil {
 		return User{}, err
 	}
 
