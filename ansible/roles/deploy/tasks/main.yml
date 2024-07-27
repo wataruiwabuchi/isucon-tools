@@ -10,7 +10,8 @@
   copy:
     src: "{{ local_collection_path }}/{{ item | basename }}"
     dest: "{{ item }}"
-    mode: "{{ default_file_mode }}"
+    # 利便性を重視して 777
+    mode: "777"
   loop: "{{ managed_files }}"
 
 - name: Restart related services

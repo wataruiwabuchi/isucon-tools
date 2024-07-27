@@ -11,8 +11,35 @@ all:
     ansible_user: isucon
 
     # 収集および配布するファイルのリスト
+    # 現状ファイルしか指定できないので全部列挙する
     managed_files:
       - /etc/nginx/nginx.conf
+      - /etc/nginx/sites-enabled/isupipe.conf
+      - /etc/mysql/mysql.conf.d/mysqld.cnf
+      - /etc/systemd/system/isupipe-go.service
+      - /home/isucon/env.sh
+      - /home/isucon/go.mod
+      - /home/isucon/go.sum
+      - /home/isucon/webapp/go/livecomment_handler.go
+      - /home/isucon/webapp/go/livestream_handler.go
+      - /home/isucon/webapp/go/main.go
+      - /home/isucon/webapp/go/payment_handler.go
+      - /home/isucon/webapp/go/reaction_handler.go
+      - /home/isucon/webapp/go/stats_handler.go
+      - /home/isucon/webapp/go/top_handler.go
+      - /home/isucon/webapp/go/user_handler.go
+      - /home/isucon/webapp/sql/init.sh
+      - /home/isucon/webapp/sql/init.sql
+      - /home/isucon/webapp/sql/initdb.d/00_create_database.sql
+      - /home/isucon/webapp/sql/initdb.d/10_schema.sql
+      - /home/isucon/webapp/sql/initial_livecomments.sql
+      - /home/isucon/webapp/sql/initial_livestream_tags.sql
+      - /home/isucon/webapp/sql/initial_livestreams.sql
+      - /home/isucon/webapp/sql/initial_ngwords.sql
+      - /home/isucon/webapp/sql/initial_reactions.sql
+      - /home/isucon/webapp/sql/initial_reservation_slots.sql
+      - /home/isucon/webapp/sql/initial_tags.sql
+      - /home/isucon/webapp/sql/initial_users.sql
 
     # ローカルでの収集ファイルの保存先
     local_collection_path: "{{ playbook_dir }}/collected_files"

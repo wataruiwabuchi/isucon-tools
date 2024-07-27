@@ -2,6 +2,6 @@
 - name: Deploy files to servers
   hosts: all
   become: yes
-  
+
   roles:
-    - file_deployer
+    - deploy
