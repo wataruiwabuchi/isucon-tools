@@ -16,6 +16,6 @@
 
 - name: Restart related services
   systemd:
-    name: "{{ service_name }}"
+    name: "{{ item }}"
     state: restarted
-  when: service_name is defined
+  loop: "{{ service_names }}"

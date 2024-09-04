@@ -50,5 +50,7 @@ all:
     default_dir_mode: '0755'
 
     # アプリケーション関連の変数
-    app_name: your_app
-    service_name: your_app_service
+    service_names:
+      - mysql
+      - nginx
+      - isupipe-go
