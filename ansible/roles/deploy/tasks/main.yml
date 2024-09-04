@@ -10,8 +10,8 @@
   copy:
     src: "{{ local_collection_path }}/{{ item | basename }}"
     dest: "{{ item }}"
-    # 利便性を重視して 777
-    mode: "777"
+    # 開けすぎると動かないミドルウェアとかある
+    mode: "744"
   loop: "{{ managed_files }}"
 
 - name: Restart related services
