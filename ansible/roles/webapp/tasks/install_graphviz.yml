@@ -2,6 +2,10 @@
 - become: yes # sudo権限を使用
 
   block:
+    - name: Wait for apt lock
+      shell: while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done
+      timeout: 300
+
     - name: Update apt cache
       apt:
         update_cache: yes
