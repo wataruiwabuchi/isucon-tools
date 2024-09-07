@@ -21,21 +21,21 @@
         path: /etc/redis/redis.conf
         regexp: '^bind 127\.0\.0\.1'
         line: "bind 0.0.0.0"
-      notify: Restart Redis
+      # notify: Restart Redis
 
     - name: Set Redis maxmemory
       lineinfile:
         path: /etc/redis/redis.conf
         regexp: "^# maxmemory <bytes>"
         line: "maxmemory 256mb"
-      notify: Restart Redis
+      # notify: Restart Redis
 
     - name: Set Redis maxmemory-policy
       lineinfile:
         path: /etc/redis/redis.conf
         regexp: "^# maxmemory-policy noeviction"
         line: "maxmemory-policy allkeys-lru"
-      notify: Restart Redis
+      # notify: Restart Redis
 
   # TODO handlers はここにはおけなさそう、 deploy スクリプトとか bench スクリプトに置くべきかもしれない
   # handlers:
