@@ -7,17 +7,35 @@
     pprotein_install_path: "/usr/local/bin"
 
   block:
+    - name: Check if PProtein is already installed
+      command: which pprotein
+      register: pprotein_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Set fact for PProtein installation status
+      set_fact:
+        pprotein_installed: "{{ pprotein_check.rc == 0 }}"
+
     - name: Download PProtein
       get_url:
         url: "{{ pprotein_url }}"
         dest: "/tmp/pprotein.tar.gz"
         mode: "0644"
+      when: not pprotein_installed
 
     - name: Extract PProtein
       unarchive:
         src: "/tmp/pprotein.tar.gz"
         dest: "{{ pprotein_install_path }}"
         remote_src: yes
+      when: not pprotein_installed
+
+    - name: Clean up downloaded archive
+      file:
+        path: "/tmp/pprotein.tar.gz"
+        state: absent
+      when: not pprotein_installed
 
     - name: Create PProtein service file
       copy:
@@ -55,30 +73,49 @@
         dest: "/etc/systemd/system/pprotein-agent.service"
         mode: "0644"
 
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Start PProtein service
+      systemd:
+        name: pprotein
+        state: started
+        enabled: yes
+
+    - name: Start PProtein agent service
+      systemd:
+        name: pprotein-agent
+        state: started
+        enabled: yes
+
+    # NOTE service を起動するとデフォルトファイルが作成されるのでその後に上書き
     - name: Create PProtein targets.json
       copy:
         content: |
-        [
-[
-  {
-    "Type": "pprof",
-    "Label": "localhost",
-    "URL": "http://localhost:8080/debug/pprof/profile",
-    "Duration": 10
-  },
-  {
-    "Type": "httplog",
-    "Label": "localhost",
-    "URL": "http://localhost:9000/debug/log/httplog",
-    "Duration": 10
-  },
-  {
-    "Type": "slowlog",
-    "Label": "localhost",
-    "URL": "http://localhost:9000/debug/log/slowlog",
-    "Duration": 10
-  }
-]
+          [
+            {
+              "Type": "pprof",
+              "Label": "localhost",
+              "URL": "http://localhost:8080/debug/pprof/profile",
+              "Duration": 10
+            },
+            {
+              "Type": "httplog",
+              "Label": "localhost",
+              "URL": "http://localhost:9000/debug/log/httplog",
+              "Duration": 10
+            },
+            {
+              "Type": "slowlog",
+              "Label": "localhost",
+              "URL": "http://localhost:9000/debug/log/slowlog",
+              "Duration": 10
+            }
+          ]
+        dest: "{{ pprotein_install_path }}/data/targets.json"
+        mode: "0644"
+
     - name: Create PProtein alp config file
       copy:
         content: |
@@ -100,24 +137,3 @@
             - ^/api/livestream/[0-9a-f_-]+/statistics$
         dest: "{{ pprotein_install_path }}/alp.yml"
         mode: "0644"
-
-    - name: Reload systemd
-      systemd:
-        daemon_reload: yes
-
-    - name: Start PProtein service
-      systemd:
-        name: pprotein
-        state: started
-        enabled: yes
-
-    - name: Start PProtein agent service
-      systemd:
-        name: pprotein-agent
-        state: started
-        enabled: yes
-
-    - name: Clean up downloaded archive
-      file:
-        path: "/tmp/pprotein.tar.gz"
-        state: absent
