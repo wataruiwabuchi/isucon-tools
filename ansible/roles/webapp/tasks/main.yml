@@ -36,3 +36,17 @@
     name: glances
     state: present
   become: yes
+
+- name: Download tmux config file
+  get_url:
+    url: "https://raw.githubusercontent.com/wataruiwabuchi/tmux_config/master/.tmux.conf"
+    dest: "/home/{{ target_user }}/.tmux.conf"
+    mode: '0644'
+    force: yes
+
+- name: Download vim config file
+  get_url:
+    url: "https://raw.githubusercontent.com/wataruiwabuchi/vim_config/master/.vimrc"
+    dest: "/home/{{ target_user }}/.vimrc"
+    mode: '0644'
+    force: yes
