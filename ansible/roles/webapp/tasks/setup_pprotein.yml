@@ -98,19 +98,19 @@
               "Type": "pprof",
               "Label": "localhost",
               "URL": "http://localhost:8080/debug/pprof/profile",
-              "Duration": 10
+              "Duration": 60
             },
             {
               "Type": "httplog",
               "Label": "localhost",
               "URL": "http://localhost:9000/debug/log/httplog",
-              "Duration": 10
+              "Duration": 60
             },
             {
               "Type": "slowlog",
               "Label": "localhost",
               "URL": "http://localhost:9000/debug/log/slowlog",
-              "Duration": 10
+              "Duration": 60
             }
           ]
         dest: "{{ pprotein_install_path }}/data/targets.json"
