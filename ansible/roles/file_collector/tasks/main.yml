@@ -6,11 +6,15 @@
     mode: "{{ default_dir_mode }}"
   delegate_to: localhost
 
-- name: Collect files from remote servers
-  fetch:
+# NOTE fetch だとディレクトリ構造に host name の情報も含まれて辛かったので sync を使う、ディレクトリも指定可能
+- name: Sync files from remote servers preserving directory structure without host information
+  synchronize:
     src: "{{ item }}"
     dest: "{{ local_collection_path }}/"
-    flat: yes
+    mode: pull
+    delete: no
+    recursive: yes
+    links: yes
   loop: "{{ managed_files }}"
 
 - name: Display collected files

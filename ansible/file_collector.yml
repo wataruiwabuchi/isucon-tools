@@ -2,6 +2,6 @@
 - name: Collect files from servers
   hosts: all
   gather_facts: no
-  
+
   roles:
     - file_collector

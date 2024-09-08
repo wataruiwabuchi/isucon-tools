@@ -6,12 +6,15 @@
     mode: "{{ default_dir_mode }}"
   loop: "{{ managed_files }}"
 
-- name: Deploy files to their destinations
-  copy:
-    src: "{{ local_collection_path }}/{{ item | basename }}"
-    dest: "{{ item }}"
-    # 開けすぎると動かないミドルウェアとかある
-    mode: "744"
+- name: Synchronize files back to their destinations
+  synchronize:
+    src: "{{ local_collection_path }}/"
+    dest: "{{ item | dirname }}/"
+    mode: push
+    delete: no
+    rsync_opts:
+      - "--include={{ item | basename }}"
+      - "--exclude=*"
   loop: "{{ managed_files }}"
 
 - name: Restart related services
