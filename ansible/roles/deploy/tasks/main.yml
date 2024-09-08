@@ -12,9 +12,9 @@
     dest: "{{ item | dirname }}/"
     mode: push
     delete: no
-    rsync_opts:
-      - "--include={{ item | basename }}"
-      - "--exclude=*"
+    # rsync_opts:
+    #   - "--include={{ item | basename }}"
+    #   - "--exclude=*"
   loop: "{{ managed_files }}"
 
 - name: Restart related services
