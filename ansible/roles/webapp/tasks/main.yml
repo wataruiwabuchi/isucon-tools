@@ -37,6 +37,12 @@
     state: present
   become: yes
 
+- name: Install pt-query-digest
+  apt:
+    name: percona-toolkit
+    state: present
+  become: yes
+
 - name: Download tmux config file
   get_url:
     url: "https://raw.githubusercontent.com/wataruiwabuchi/tmux_config/master/.tmux.conf"
