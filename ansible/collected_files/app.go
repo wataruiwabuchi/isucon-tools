@@ -492,11 +492,11 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postIDs := lop.FilterMap(postList, func(p Post, _ int) (int, bool) {
+	postIDs := lo.FilterMap(postList, func(p Post, _ int) (int, bool) {
 		if p.UserID == user.ID {
 			return p.ID, true
 		}
-		return "", false
+		return 0, false
 	})
 	postCount := len(postIDs)
 
