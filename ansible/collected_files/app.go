@@ -27,8 +27,10 @@ import (
 )
 
 var (
-	db    *sqlx.DB
-	store *gsm.MemcacheStore
+	db            *sqlx.DB
+	store         *gsm.MemcacheStore
+	postList      = make([]Post, 0, 10000)
+	postListMutex = sync.Mutex{}
 )
 
 const (
@@ -416,15 +418,18 @@ func getLogout(w http.ResponseWriter, r *http.Request) {
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
 
-	results := []Post{}
+	postListMutex.Lock()
+	defer postListMutex.Unlock()
 
-	err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
-	if err != nil {
-		log.Print(err)
-		return
+	if len(postList) == 0 {
+		err := db.Select(&postList, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+		if err != nil {
+			log.Print(err)
+			return
+		}
 	}
 
-	posts, err := makePosts(results, getCSRFToken(r), false)
+	posts, err := makePosts(postList, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
