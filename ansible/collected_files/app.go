@@ -674,11 +674,6 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postListMutex.Lock()
-	defer postListMutex.Unlock()
-
-	postList = append(postList, Post{UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body")})
-
 	query := "INSERT INTO `posts` (`user_id`, `mime`, `imgdata`, `body`) VALUES (?,?,?,?)"
 	result, err := db.Exec(
 		query,
@@ -697,6 +692,10 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
+
+	postListMutex.Lock()
+	defer postListMutex.Unlock()
+	postList = append(postList, Post{ID: int(pid), UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body")})
 
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
 }
