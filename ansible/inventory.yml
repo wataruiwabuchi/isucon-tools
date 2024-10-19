@@ -18,14 +18,14 @@ all:
       - /etc/nginx/sites-available/isucon.conf
       - /etc/mysql/mysql.conf.d/mysqld.cnf
       - /home/isucon/private_isu/webapp/golang/templates/post_id.html
-      - /home/isucon/private_isu/webapp/golang/templates/user.html
-      - /home/isucon/private_isu/webapp/golang/templates/post.html
-      - /home/isucon/private_isu/webapp/golang/templates/banned.html
-      - /home/isucon/private_isu/webapp/golang/templates/posts.html
-      - /home/isucon/private_isu/webapp/golang/templates/login.html
-      - /home/isucon/private_isu/webapp/golang/templates/layout.html
-      - /home/isucon/private_isu/webapp/golang/templates/index.html
-      - /home/isucon/private_isu/webapp/golang/templates/register.html
+      # - /home/isucon/private_isu/webapp/golang/templates/user.html
+      # - /home/isucon/private_isu/webapp/golang/templates/post.html
+      # - /home/isucon/private_isu/webapp/golang/templates/banned.html
+      # - /home/isucon/private_isu/webapp/golang/templates/posts.html
+      # - /home/isucon/private_isu/webapp/golang/templates/login.html
+      # - /home/isucon/private_isu/webapp/golang/templates/layout.html
+      # - /home/isucon/private_isu/webapp/golang/templates/index.html
+      # - /home/isucon/private_isu/webapp/golang/templates/register.html
       - /home/isucon/private_isu/webapp/golang/Makefile
       - /home/isucon/private_isu/webapp/golang/.gitignore
       - /home/isucon/private_isu/webapp/golang/app.go
