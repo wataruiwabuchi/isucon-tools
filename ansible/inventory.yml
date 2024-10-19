@@ -15,12 +15,25 @@ all:
     # 現状ファイルしか指定できないので全部列挙する
     managed_files:
       - /etc/nginx/nginx.conf
-      - /etc/nginx/sites-enabled/isupipe.conf
+      - /etc/nginx/sites-available/isucon.conf
       - /etc/mysql/mysql.conf.d/mysqld.cnf
-      - /etc/systemd/system/isuports.service
-      - /home/isucon/webapp/go
-      - /home/isucon/webapp/sql
-      - /home/isucon/webapp/docker-compose-go.yml
+      - /home/isucon/private_isu/webapp/golang/templates/post_id.html
+      - /home/isucon/private_isu/webapp/golang/templates/user.html
+      - /home/isucon/private_isu/webapp/golang/templates/post.html
+      - /home/isucon/private_isu/webapp/golang/templates/banned.html
+      - /home/isucon/private_isu/webapp/golang/templates/posts.html
+      - /home/isucon/private_isu/webapp/golang/templates/login.html
+      - /home/isucon/private_isu/webapp/golang/templates/layout.html
+      - /home/isucon/private_isu/webapp/golang/templates/index.html
+      - /home/isucon/private_isu/webapp/golang/templates/register.html
+      - /home/isucon/private_isu/webapp/golang/Makefile
+      - /home/isucon/private_isu/webapp/golang/app
+      - /home/isucon/private_isu/webapp/golang/.gitignore
+      - /home/isucon/private_isu/webapp/golang/app.go
+      - /home/isucon/private_isu/webapp/golang/go.sum
+      - /home/isucon/private_isu/webapp/golang/setup.sh
+      - /home/isucon/private_isu/webapp/golang/go.mod
+      - /home/isucon/private_isu/webapp/golang/Dockerfile
 
     # ローカルでの収集ファイルの保存先
     local_collection_path: "{{ playbook_dir }}/collected_files"
@@ -33,4 +46,4 @@ all:
     service_names:
       - mysql
       - nginx
-      - isupipe-go
+      - isu-go
