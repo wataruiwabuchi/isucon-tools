@@ -28,10 +28,8 @@ import (
 )
 
 var (
-	db            *sqlx.DB
-	store         *gsm.MemcacheStore
-	postList      = make([]Post, 0, 10000)
-	postListMutex = sync.Mutex{}
+	db    *sqlx.DB
+	store *gsm.MemcacheStore
 )
 
 const (
@@ -74,6 +72,8 @@ type Comment struct {
 var (
 	commentCountCache = sync.Map{}
 	userCache         = sync.Map{}
+	postCache         = make([]Post, 0, 10000)
+	postCacheMutex    = sync.Mutex{}
 )
 
 func init() {
@@ -419,18 +419,18 @@ func getLogout(w http.ResponseWriter, r *http.Request) {
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
 
-	postListMutex.Lock()
-	defer postListMutex.Unlock()
+	postCacheMutex.Lock()
+	defer postCacheMutex.Unlock()
 
-	if len(postList) == 0 {
-		err := db.Select(&postList, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+	if len(postCache) == 0 {
+		err := db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
 		if err != nil {
 			log.Print(err)
 			return
 		}
 	}
 
-	posts, err := makePosts(postList, getCSRFToken(r), false)
+	posts, err := makePosts(postCache, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
@@ -468,18 +468,18 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postListMutex.Lock()
-	defer postListMutex.Unlock()
+	postCacheMutex.Lock()
+	defer postCacheMutex.Unlock()
 
-	if len(postList) == 0 {
-		err = db.Select(&postList, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
+	if len(postCache) == 0 {
+		err = db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
 		if err != nil {
 			log.Print(err)
 			return
 		}
 	}
 
-	posts, err := makePosts(postList, getCSRFToken(r), false)
+	posts, err := makePosts(postCache, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
@@ -492,7 +492,7 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postIDs := lo.FilterMap(postList, func(p Post, _ int) (int, bool) {
+	postIDs := lo.FilterMap(postCache, func(p Post, _ int) (int, bool) {
 		if p.UserID == user.ID {
 			return p.ID, true
 		}
@@ -560,18 +560,18 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postListMutex.Lock()
-	defer postListMutex.Unlock()
+	postCacheMutex.Lock()
+	defer postCacheMutex.Unlock()
 
-	if len(postList) == 0 {
-		err = db.Select(&postList, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
+	if len(postCache) == 0 {
+		err = db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
 		if err != nil {
 			log.Print(err)
 			return
 		}
 	}
 
-	posts, err := makePosts(postList, getCSRFToken(r), false)
+	posts, err := makePosts(postCache, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
@@ -600,16 +600,16 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postListMutex.Lock()
-	defer postListMutex.Unlock()
-	if len(postList) == 0 {
-		err = db.Select(&postList, "SELECT * FROM `posts` WHERE `id` = ?", pid)
+	postCacheMutex.Lock()
+	defer postCacheMutex.Unlock()
+	if len(postCache) == 0 {
+		err = db.Select(&postCache, "SELECT * FROM `posts` WHERE `id` = ?", pid)
 		if err != nil {
 			log.Print(err)
 			return
 		}
 	}
-	results := lo.Filter(postList, func(p Post, _ int) bool {
+	results := lo.Filter(postCache, func(p Post, _ int) bool {
 		return p.ID == pid
 	})
 
@@ -718,9 +718,9 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postListMutex.Lock()
-	defer postListMutex.Unlock()
-	postList = append(postList, Post{ID: int(pid), UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body")})
+	postCacheMutex.Lock()
+	defer postCacheMutex.Unlock()
+	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body")})
 
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
 }
