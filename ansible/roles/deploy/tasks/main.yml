@@ -17,6 +17,13 @@
     #   - "--exclude=*"
   loop: "{{ managed_files }}"
 
+- name: Build the application
+  command: make
+  args:
+    chdir: "{{ build_path }}"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ go_path }}"
+
 - name: Restart related services
   systemd:
     name: "{{ item }}"
