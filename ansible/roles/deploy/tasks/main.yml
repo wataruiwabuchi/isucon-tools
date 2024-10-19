@@ -8,8 +8,8 @@
 
 - name: Synchronize files back to their destinations
   synchronize:
-    src: "{{ local_collection_path }}/"
-    dest: "{{ item | dirname }}/"
+    src: "{{ local_collection_path }}/{{ item | basename }}"
+    dest: "{{ item | dirname }}/{{ item | basename }}"
     mode: push
     delete: no
     # rsync_opts:
