@@ -21,6 +21,8 @@ all:
       - /home/isucon/webapp/go
       - /home/isucon/webapp/sql
       - /home/isucon/webapp/docker-compose-go.yml
+    go_path: /home/isucon/.local/go/bin
+    build_path: /home/isucon/private_isu/webapp/golang
 
     # ローカルでの収集ファイルの保存先
     local_collection_path: "{{ playbook_dir }}/collected_files"
