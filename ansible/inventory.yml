@@ -27,7 +27,6 @@ all:
       - /home/isucon/private_isu/webapp/golang/templates/index.html
       - /home/isucon/private_isu/webapp/golang/templates/register.html
       - /home/isucon/private_isu/webapp/golang/Makefile
-      - /home/isucon/private_isu/webapp/golang/app
       - /home/isucon/private_isu/webapp/golang/.gitignore
       - /home/isucon/private_isu/webapp/golang/app.go
       - /home/isucon/private_isu/webapp/golang/go.sum
