@@ -33,6 +33,8 @@ all:
       - /home/isucon/private_isu/webapp/golang/setup.sh
       - /home/isucon/private_isu/webapp/golang/go.mod
       - /home/isucon/private_isu/webapp/golang/Dockerfile
+    go_path: /home/isucon/.local/go/bin
+    build_path: /home/isucon/private_isu/webapp/golang
 
     build_path: /home/isucon/webapp/go
 
