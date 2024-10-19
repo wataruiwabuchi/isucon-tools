@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
@@ -66,6 +67,11 @@ type Comment struct {
 	CreatedAt time.Time `db:"created_at"`
 	User      User
 }
+
+var (
+	commentCountCache = sync.Map{}
+	userCache         = sync.Map{}
+)
 
 func init() {
 	memdAddr := os.Getenv("ISUCONP_MEMCACHED_ADDRESS")
@@ -176,9 +182,14 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 	var posts []Post
 
 	for _, p := range results {
-		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
-		if err != nil {
-			return nil, err
+		if commentCount, ok := commentCountCache.Load(p.ID); ok {
+			p.CommentCount = commentCount.(int)
+		} else {
+			err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+			if err != nil {
+				return nil, err
+			}
+			commentCountCache.Store(p.ID, p.CommentCount)
 		}
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
@@ -186,15 +197,20 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 			query += " LIMIT 3"
 		}
 		var comments []Comment
-		err = db.Select(&comments, query, p.ID)
+		err := db.Select(&comments, query, p.ID)
 		if err != nil {
 			return nil, err
 		}
 
 		for i := 0; i < len(comments); i++ {
-			err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
-			if err != nil {
-				return nil, err
+			if user, ok := userCache.Load(comments[i].UserID); ok {
+				comments[i].User = user.(User)
+			} else {
+				err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
+				if err != nil {
+					return nil, err
+				}
+				userCache.Store(comments[i].UserID, comments[i].User)
 			}
 		}
 
@@ -209,6 +225,7 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 		if err != nil {
 			return nil, err
 		}
+		userCache.Store(p.UserID, p.User)
 
 		p.CSRFToken = csrfToken
 
@@ -733,6 +750,10 @@ func postComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if commentCount, ok := commentCountCache.Load(postID); ok {
+		commentCountCache.Store(postID, commentCount.(int)+1)
+	}
+
 	http.Redirect(w, r, fmt.Sprintf("/posts/%d", postID), http.StatusFound)
 }
 
@@ -789,9 +810,13 @@ func postAdminBanned(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
-
 	for _, id := range r.Form["uid[]"] {
 		db.Exec(query, 1, id)
+		if cachedUser, ok := userCache.Load(id); ok {
+			user := cachedUser.(User)
+			user.DelFlg = 1
+			userCache.Store(id, user)
+		}
 	}
 
 	http.Redirect(w, r, "/admin/banned", http.StatusFound)
