@@ -24,6 +24,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 	"github.com/kaz/pprotein/integration/standalone"
+	"github.com/samber/lo"
 )
 
 var (
@@ -442,15 +443,18 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := []Post{}
+	postListMutex.Lock()
+	defer postListMutex.Unlock()
 
-	err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
-	if err != nil {
-		log.Print(err)
-		return
+	if len(postList) == 0 {
+		err = db.Select(&postList, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
+		if err != nil {
+			log.Print(err)
+			return
+		}
 	}
 
-	posts, err := makePosts(results, getCSRFToken(r), false)
+	posts, err := makePosts(postList, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
@@ -463,12 +467,12 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postIDs := []int{}
-	err = db.Select(&postIDs, "SELECT `id` FROM `posts` WHERE `user_id` = ?", user.ID)
-	if err != nil {
-		log.Print(err)
-		return
-	}
+	postIDs := lop.FilterMap(postList, func(p Post, _ int) (int, bool) {
+		if p.UserID == user.ID {
+			return p.ID, true
+		}
+		return "", false
+	})
 	postCount := len(postIDs)
 
 	commentedCount := 0
@@ -531,14 +535,18 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := []Post{}
-	err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
-	if err != nil {
-		log.Print(err)
-		return
+	postListMutex.Lock()
+	defer postListMutex.Unlock()
+
+	if len(postList) == 0 {
+		err = db.Select(&postList, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
+		if err != nil {
+			log.Print(err)
+			return
+		}
 	}
 
-	posts, err := makePosts(results, getCSRFToken(r), false)
+	posts, err := makePosts(postList, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
@@ -567,12 +575,18 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := []Post{}
-	err = db.Select(&results, "SELECT * FROM `posts` WHERE `id` = ?", pid)
-	if err != nil {
-		log.Print(err)
-		return
+	postListMutex.Lock()
+	defer postListMutex.Unlock()
+	if len(postList) == 0 {
+		err = db.Select(&postList, "SELECT * FROM `posts` WHERE `id` = ?", pid)
+		if err != nil {
+			log.Print(err)
+			return
+		}
 	}
+	results := lo.Filter(postList, func(p Post, _ int) bool {
+		return p.ID == pid
+	})
 
 	posts, err := makePosts(results, getCSRFToken(r), true)
 	if err != nil {
@@ -659,6 +673,11 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
+
+	postListMutex.Lock()
+	defer postListMutex.Unlock()
+
+	postList = append(postList, Post{UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body")})
 
 	query := "INSERT INTO `posts` (`user_id`, `mime`, `imgdata`, `body`) VALUES (?,?,?,?)"
 	result, err := db.Exec(
