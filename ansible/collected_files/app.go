@@ -157,9 +157,14 @@ func getSessionUser(r *http.Request) User {
 
 	u := User{}
 
-	err := db.Get(&u, "SELECT * FROM `users` WHERE `id` = ?", uid)
-	if err != nil {
-		return User{}
+	if cachedUser, ok := userCache.Load(uid); ok {
+		u = cachedUser.(User)
+	} else {
+		err := db.Get(&u, "SELECT * FROM `users` WHERE `id` = ?", uid)
+		if err != nil {
+			return User{}
+		}
+		userCache.Store(uid, u)
 	}
 
 	return u
@@ -221,11 +226,15 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		p.Comments = comments
 
-		err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID)
-		if err != nil {
-			return nil, err
+		if user, ok := userCache.Load(p.UserID); ok {
+			p.User = user.(User)
+		} else {
+			err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID)
+			if err != nil {
+				return nil, err
+			}
+			userCache.Store(p.UserID, p.User)
 		}
-		userCache.Store(p.UserID, p.User)
 
 		p.CSRFToken = csrfToken
 
