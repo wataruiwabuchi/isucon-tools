@@ -1,0 +1,40 @@
+{
+    "version": "0.2",
+    "language": "en,ja",
+    "words": [
+        "alp",
+        "dpkg",
+        "glances",
+        "graphviz",
+        "httplog",
+        "isubata",
+        "isucondition",
+        "isucon",
+        "isupipe",
+        "isuports",
+        "iwabuchi",
+        "mariadb",
+        "mysqld",
+        "nginx",
+        "percona",
+        "pprof",
+        "pprotein",
+        "pyenv",
+        "rsync",
+        "slowlog",
+        "systemd",
+        "tmux",
+        "wataru"
+    ],
+    "ignorePaths": [
+        "node_modules",
+        "venv",
+        ".git",
+        "*.log"
+    ],
+    "allowCompoundWords": true,
+    "ignoreRegExpList": [
+        "/```[\\s\\S]*?```/",
+        "/`[^`]*`/"
+    ]
+}
