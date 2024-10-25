@@ -15,6 +15,10 @@
     delete: no
     recursive: yes
     links: yes
+    relative: yes
+    archive: yes
+    owner: yes
+    group: yes
   loop: "{{ managed_files }}"
 
 - name: Display collected files
