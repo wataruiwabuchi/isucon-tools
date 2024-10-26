@@ -17,12 +17,10 @@ all:
       - /etc/nginx/nginx.conf
       - /etc/nginx/sites-enabled/isupipe.conf
       - /etc/mysql/mysql.conf.d/mysqld.cnf
-      - /etc/systemd/system/isuports.service
+      - /etc/systemd/system/isupipe-go.service
       - /home/isucon/webapp/go
       - /home/isucon/webapp/sql
-      - /home/isucon/webapp/docker-compose-go.yml
-    go_path: /home/isucon/.local/go/bin
-    build_path: /home/isucon/private_isu/webapp/golang
+    build_path: /home/isucon/webapp/go
 
     # ローカルでの収集ファイルの保存先
     local_collection_path: "{{ playbook_dir }}/collected_files"

@@ -21,11 +21,13 @@
   become: no
 
 - name: Build the application
-  command: make
+  shell: |
+    source ~/.profile || true
+    exec make
   args:
     chdir: "{{ build_path }}"
-  environment:
-    PATH: "{{ ansible_env.PATH }}:{{ go_path }}"
+    executable: /bin/bash
+  become: no
 
 - name: Restart related services
   systemd:
