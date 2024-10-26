@@ -13,6 +13,35 @@ resource "aws_vpc" "isucon_vpc" {
   }
 }
 
+# インターネットゲートウェイ
+resource "aws_internet_gateway" "isucon_igw" {
+  vpc_id = aws_vpc.isucon_vpc.id
+
+  tags = {
+    Name = "isucon-igw"
+  }
+}
+
+# ルートテーブル
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.isucon_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.isucon_igw.id
+  }
+
+  tags = {
+    Name = "isucon-public-rt"
+  }
+}
+
+# ルートテーブルの関連付け
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
 # パブリックサブネット
 resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.isucon_vpc.id
@@ -22,14 +51,6 @@ resource "aws_subnet" "public" {
   tags = {
     Name = "isucon-public-subnet"
   }
-}
-
-# インスタンス数の変数定義
-variable "instance_count" {
-  description = "Number of ISUCON instances to create"
-  type        = number
-  # NOTE 基本的にはベンチ含めて 4 台
-  default     = 1
 }
 
 # ISUCON用EC2インスタンス
@@ -44,6 +65,7 @@ resource "aws_iam_instance_profile" "isucon_profile" {
 
 # ISUCON用EC2インスタンス
 resource "aws_instance" "isucon" {
+  # count = 3 # 基本的にはベンチ含めて 4 台
   count                = var.instance_count
   ami                  = var.ami_id
   # instance_type = "c5.large"  # 基本的には c5.large
@@ -84,13 +106,6 @@ resource "aws_instance" "isucon" {
 # 現在のIPアドレスを取得
 data "http" "my_ip" {
   url = "https://api.ipify.org"
-}
-
-# 追加のIPアドレス用の変数
-variable "additional_trusted_ips" {
-  description = "追加で許可するIPアドレス"
-  type        = list(string)
-  default     = []
 }
 
 locals {
