@@ -1,0 +1,27 @@
+# Terraform関連
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraformrc
+terraform.rc
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# クレデンシャル関連
+.env
+credentials.json
+*.pem
+*.key
+
+# ローカル設定
+.terraform.lock.hcl
+.idea/
+.vscode/
+
+# OS関連
+.DS_Store
+Thumbs.db
