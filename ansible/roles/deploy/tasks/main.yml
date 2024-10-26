@@ -1,11 +1,4 @@
 ---
-- name: Ensure destination directories exist
-  file:
-    path: "{{ item | dirname }}"
-    state: directory
-    mode: "{{ default_dir_mode }}"
-  loop: "{{ managed_paths }}"
-
 # NOTE リモート側の owner などを維持するために inplace を使おうとしたが synchronize では使えないらしいので直接実行
 # NOTE ファイルとディレクトリを混在させながらループ処理するのは末尾の / の問題などで難しかったのでいっそのことフルパスであることを活かしてルートに直接配布
 - name: Synchronize files using rsync with advanced options
