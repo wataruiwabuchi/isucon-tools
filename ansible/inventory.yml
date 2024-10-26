@@ -13,7 +13,7 @@ all:
 
     # 収集および配布するファイルのリスト
     # 現状ファイルしか指定できないので全部列挙する
-    managed_files:
+    managed_paths:
       - /etc/nginx/nginx.conf
       - /etc/nginx/sites-enabled/isupipe.conf
       - /etc/mysql/mysql.conf.d/mysqld.cnf

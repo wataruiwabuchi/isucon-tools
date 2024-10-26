@@ -15,7 +15,7 @@
     mode: "0755"
   delegate_to: localhost
   become: no
-  loop: "{{ managed_files }}"
+  loop: "{{ managed_paths }}"
 
 # NOTE fetch だとディレクトリ構造に host name の情報も含まれて辛かったので sync を使う、ディレクトリも指定可能
 - name: Collect files and directories
@@ -24,4 +24,4 @@
     dest: "{{ local_collection_path }}{{ item | dirname }}/"
     mode: pull
     recursive: yes
-  loop: "{{ managed_files }}"
+  loop: "{{ managed_paths }}"
