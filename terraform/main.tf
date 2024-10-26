@@ -60,6 +60,22 @@ resource "aws_instance" "isucon" {
     volume_type = "gp3"
   }
 
+  user_data = <<-EOF
+              #!/usr/bin/env bash
+              export HOME=/home/isucon
+              mkdir -p $HOME/.ssh
+              touch $HOME/.ssh/authorized_keys
+              chmod 700 $HOME/.ssh
+              chmod 600 $HOME/.ssh/authorized_keys
+
+              # GitHubから公開鍵を取得して追加
+              %{for user in var.github_users}
+              curl -s https://github.com/${user}.keys >> $HOME/.ssh/authorized_keys
+              %{endfor}
+
+              chown -R isucon:isucon $HOME/.ssh
+              EOF
+
   tags = {
     Name = "isucon-instance-${count.index + 1}"
   }
