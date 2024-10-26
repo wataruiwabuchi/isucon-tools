@@ -3,10 +3,12 @@
     "language": "en,ja",
     "words": [
         "alp",
+        "chdir",
         "dpkg",
         "glances",
         "graphviz",
         "httplog",
+        "inplace",
         "isubata",
         "isucondition",
         "isucon",
