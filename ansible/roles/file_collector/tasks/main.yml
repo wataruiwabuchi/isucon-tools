@@ -3,26 +3,25 @@
   file:
     path: "{{ local_collection_path }}"
     state: directory
-    mode: "{{ default_dir_mode }}"
+    mode: "0755"
   delegate_to: localhost
+  become: no
+
+# NOTE エラーになることがあるので事前に作成
+- name: Create parent directories for each path
+  file:
+    path: "{{ local_collection_path }}{{ item | dirname }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+  become: no
+  loop: "{{ managed_files }}"
 
 # NOTE fetch だとディレクトリ構造に host name の情報も含まれて辛かったので sync を使う、ディレクトリも指定可能
-- name: Sync files from remote servers preserving directory structure without host information
+- name: Collect files and directories
   synchronize:
     src: "{{ item }}"
-    dest: "{{ local_collection_path }}/"
+    dest: "{{ local_collection_path }}{{ item | dirname }}/"
     mode: pull
-    delete: no
     recursive: yes
-    links: yes
-    relative: yes
-    archive: yes
-    owner: yes
-    group: yes
   loop: "{{ managed_files }}"
-
-- name: Display collected files
-  debug:
-    msg: "Collected file: {{ item }}"
-  loop: "{{ managed_files }}"
-  delegate_to: localhost
