@@ -72,9 +72,85 @@ type Comment struct {
 }
 
 var (
-	commentCountCache = sync.Map{}
-	userCache         = sync.Map{}
+	userCache = sync.Map{}
 )
+
+// CommentQueue は投稿IDごとの全コメントを保持
+type CommentQueue struct {
+	mu       sync.RWMutex
+	comments []Comment
+}
+
+// グローバルな投稿ID -> キューのマップ
+var postCommentQueues sync.Map // map[int]*CommentQueue
+
+// キューの取得（なければ作成）
+func getCommentQueue(postID int) *CommentQueue {
+	queue, exists := postCommentQueues.Load(postID)
+	if !exists {
+		// 新規キュー作成
+		newQueue := &CommentQueue{
+			comments: make([]Comment, 0),
+		}
+
+		// DBから全コメントをロード
+		comments, err := loadComments(postID)
+		if err != nil {
+			log.Printf("Failed to load comments for post %d: %v", postID, err)
+		} else {
+			newQueue.comments = comments
+		}
+
+		// 保存（競合する場合は既存のものを使用）
+		actualQueue, _ := postCommentQueues.LoadOrStore(postID, newQueue)
+		queue = actualQueue
+	}
+	return queue.(*CommentQueue)
+}
+
+// DBから全コメントをロード
+func loadComments(postID int) ([]Comment, error) {
+	var comments []Comment
+	err := db.Select(&comments,
+		"SELECT * FROM comments WHERE post_id = ? ORDER BY created_at DESC",
+		postID)
+	if err != nil {
+		return nil, err
+	}
+	return comments, nil
+}
+
+// キューにコメントを追加
+func (q *CommentQueue) AddComment(comment Comment) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	// 新しいコメントを先頭に追加
+	q.comments = append([]Comment{comment}, q.comments...)
+}
+
+// キューからコメントを取得
+func (q *CommentQueue) GetComments(limit int) []Comment {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
+
+	if limit <= 0 || limit >= len(q.comments) {
+		result := make([]Comment, len(q.comments))
+		copy(result, q.comments)
+		return result
+	}
+
+	result := make([]Comment, limit)
+	copy(result, q.comments[:limit])
+	return result
+}
+
+// コメント数を取得
+func (q *CommentQueue) GetCount() int {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
+	return len(q.comments)
+}
 
 func init() {
 	memdAddr := os.Getenv("ISUCONP_MEMCACHED_ADDRESS")
@@ -187,69 +263,36 @@ func getFlash(w http.ResponseWriter, r *http.Request, key string) string {
 }
 
 func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, error) {
-	var posts []Post
+	for i := range results {
+		p := &results[i]
 
-	for _, p := range results {
-		if commentCount, ok := commentCountCache.Load(p.ID); ok {
-			p.CommentCount = commentCount.(int)
+		queue := getCommentQueue(p.ID)
+
+		if allComments {
+			p.Comments = queue.GetComments(0) // 0は全件取得を意味する
 		} else {
-			err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
-			if err != nil {
-				return nil, err
-			}
-			commentCountCache.Store(p.ID, p.CommentCount)
+			p.Comments = queue.GetComments(3) // 最新3件のみ取得
 		}
 
-		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
-		if !allComments {
-			query += " LIMIT 3"
-		}
-		var comments []Comment
-		err := db.Select(&comments, query, p.ID)
-		if err != nil {
-			return nil, err
-		}
+		p.CommentCount = queue.GetCount()
 
-		for i := 0; i < len(comments); i++ {
-			if user, ok := userCache.Load(comments[i].UserID); ok {
-				comments[i].User = user.(User)
+		// ユーザー情報を設定（既存のキャッシュロジック）
+		for j := range p.Comments {
+			if user, ok := userCache.Load(p.Comments[j].UserID); ok {
+				p.Comments[j].User = user.(User)
 			} else {
-				err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
+				err := db.Get(&p.Comments[j].User, "SELECT * FROM users WHERE id = ?", p.Comments[j].UserID)
 				if err != nil {
 					return nil, err
 				}
-				userCache.Store(comments[i].UserID, comments[i].User)
+				userCache.Store(p.Comments[j].UserID, p.Comments[j].User)
 			}
-		}
-
-		// reverse
-		for i, j := 0, len(comments)-1; i < j; i, j = i+1, j-1 {
-			comments[i], comments[j] = comments[j], comments[i]
-		}
-
-		p.Comments = comments
-
-		if user, ok := userCache.Load(p.UserID); ok {
-			p.User = user.(User)
-		} else {
-			err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID)
-			if err != nil {
-				return nil, err
-			}
-			userCache.Store(p.UserID, p.User)
 		}
 
 		p.CSRFToken = csrfToken
-
-		if p.User.DelFlg == 0 {
-			posts = append(posts, p)
-		}
-		if len(posts) >= postsPerPage {
-			break
-		}
 	}
 
-	return posts, nil
+	return results, nil
 }
 
 func imageURL(p Post) string {
@@ -775,16 +818,30 @@ func postComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "INSERT INTO `comments` (`post_id`, `user_id`, `comment`) VALUES (?,?,?)"
-	_, err = db.Exec(query, postID, me.ID, r.FormValue("comment"))
+	// 新しいコメントを作成
+	comment := Comment{
+		PostID:    postID,
+		UserID:    me.ID,
+		Comment:   r.FormValue("comment"),
+		CreatedAt: time.Now(),
+		User:      me,
+	}
+
+	// DBに保存
+	result, err := db.Exec(
+		"INSERT INTO comments (post_id, user_id, comment, created_at) VALUES (?,?,?,?)",
+		comment.PostID, comment.UserID, comment.Comment, comment.CreatedAt)
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	if commentCount, ok := commentCountCache.Load(postID); ok {
-		commentCountCache.Store(postID, commentCount.(int)+1)
-	}
+	id, _ := result.LastInsertId()
+	comment.ID = int(id)
+
+	// キューに新しいコメントを追加
+	queue := getCommentQueue(postID)
+	queue.AddComment(comment)
 
 	http.Redirect(w, r, fmt.Sprintf("/posts/%d", postID), http.StatusFound)
 }
