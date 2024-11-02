@@ -743,12 +743,10 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "INSERT INTO `posts` (`user_id`, `mime`, `imgdata`, `body`) VALUES (?,?,?,?)"
+	query := "INSERT INTO `posts` (`user_id`, `body`) VALUES (?,?)"
 	result, err := db.Exec(
 		query,
 		me.ID,
-		mime,
-		filedata,
 		r.FormValue("body"),
 	)
 	if err != nil {
@@ -757,6 +755,19 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pid, err := result.LastInsertId()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	f, err := os.Create(fmt.Sprintf("/home/isucon/private_isu/webapp/images/%d.%s", pid, filedata))
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	defer f.Close()
+
+	_, err = f.Write(filedata)
 	if err != nil {
 		log.Print(err)
 		return
@@ -777,10 +788,11 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post := Post{}
-	err = db.Get(&post, "SELECT * FROM `posts` WHERE `id` = ?", pid)
-	if err != nil {
-		log.Print(err)
+	post, ok := lo.Find(postCache, func(p Post) bool {
+		return p.ID == pid
+	})
+	if !ok {
+		log.Print("Failed to get post cache")
 		return
 	}
 
