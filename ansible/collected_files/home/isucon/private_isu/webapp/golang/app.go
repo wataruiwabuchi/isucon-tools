@@ -467,7 +467,7 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 	defer postCacheMutex.Unlock()
 
 	if len(postCache) == 0 {
-		err := db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+		err := db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
 		if err != nil {
 			log.Print(err)
 			return
@@ -516,7 +516,7 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 	defer postCacheMutex.Unlock()
 
 	if len(postCache) == 0 {
-		err = db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
+		err = db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
 		if err != nil {
 			log.Print(err)
 			return
@@ -608,7 +608,7 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 	defer postCacheMutex.Unlock()
 
 	if len(postCache) == 0 {
-		err = db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
+		err = db.Select(&postCache, "SELECT `id`, `user_id`, `body`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
 		if err != nil {
 			log.Print(err)
 			return
