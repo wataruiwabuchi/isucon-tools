@@ -24,6 +24,7 @@
   delegate_to: localhost
   become: no
 
+# NOTE ローカルの app が rsync で同期されてしまっているとビルドに失敗するかも
 - name: Build the application
   shell: |
     source ~/.profile || true
