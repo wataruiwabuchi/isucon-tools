@@ -1,5 +1,6 @@
+export PATH := /home/isucon/.local/go/bin:${PATH}
 all: app
 
 .PHONY: app
 app: *.go go.mod go.sum
-	/home/isucon/.local/go/bin/go build -o app
+	go build -o app
