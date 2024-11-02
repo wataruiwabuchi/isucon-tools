@@ -1,0 +1,7 @@
+Host web1
+  HostName xxx.xxx.xxx.xxx
+  User isucon
+  Port 22
+  PasswordAuthentication no
+  IdentityFile ~/.ssh/id_rsa
+  IdentitiesOnly yes

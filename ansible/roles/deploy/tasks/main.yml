@@ -1,5 +1,6 @@
 ---
 # NOTE リモート側の owner などを維持するために inplace を使おうとしたが synchronize では使えないらしいので直接実行
+#   cf. <https://github.com/ansible/ansible-modules-core/issues/727>
 # NOTE ファイルとディレクトリを混在させながらループ処理するのは末尾の / の問題などで難しかったのでいっそのことフルパスであることを活かしてルートに直接配布
 - name: Synchronize files using rsync with advanced options
   command: >
@@ -8,8 +9,9 @@
     --inplace
     --compress
     --recursive
+    -e "ssh -F {{ playbook_dir }}/ssh_config"
     {{ local_collection_path }}/
-    {{ ansible_user }}@{{ ansible_host }}:/
+    web1:/
   delegate_to: localhost
   become: no
 
@@ -21,13 +23,6 @@
     chdir: "{{ build_path }}"
     executable: /bin/bash
   become: no
-
-- name: Build the application
-  command: make
-  args:
-    chdir: "{{ build_path }}"
-  environment:
-    PATH: "{{ ansible_env.PATH }}:{{ go_path }}"
 
 - name: Restart related services
   systemd:

@@ -3,8 +3,7 @@ all:
   children:
     web:
       hosts:
-        web1:
-          ansible_host: xxx.xxx.xxx.xxx
+        web1: {}
     db:
       hosts: {}
   vars:
@@ -33,10 +32,7 @@ all:
       - /home/isucon/private_isu/webapp/golang/setup.sh
       - /home/isucon/private_isu/webapp/golang/go.mod
       - /home/isucon/private_isu/webapp/golang/Dockerfile
-    go_path: /home/isucon/.local/go/bin
     build_path: /home/isucon/private_isu/webapp/golang
-
-    build_path: /home/isucon/webapp/go
 
     # ローカルでの収集ファイルの保存先
     local_collection_path: "{{ playbook_dir }}/collected_files"
