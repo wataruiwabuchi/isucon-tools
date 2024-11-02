@@ -2,4 +2,4 @@ all: app
 
 .PHONY: app
 app: *.go go.mod go.sum
-	go build -o app
+	/home/isucon/.local/go/bin/go build -o app
