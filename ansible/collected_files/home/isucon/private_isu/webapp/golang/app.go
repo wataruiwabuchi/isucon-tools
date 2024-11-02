@@ -761,7 +761,8 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	f, err := os.Create(fmt.Sprintf("/home/isucon/private_isu/webapp/images/%d.%s", pid, filedata))
+	ext := strings.Split(mime, "/")[1]
+	f, err := os.Create(fmt.Sprintf("/home/isucon/private_isu/webapp/images/%d.%s", pid, ext))
 	if err != nil {
 		log.Print(err)
 		return
