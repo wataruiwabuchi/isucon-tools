@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	crand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -30,6 +32,17 @@ import (
 var (
 	db    *sqlx.DB
 	store *gsm.MemcacheStore
+
+	// 内部IPアドレスの定義
+	internalIPs = struct {
+		Web1 string
+		Web2 string
+		DB   string
+	}{
+		Web1: "10.0.12.166",
+		Web2: "10.0.13.5",
+		DB:   "10.0.0.157",
+	}
 )
 
 const (
@@ -70,10 +83,9 @@ type Comment struct {
 }
 
 var (
-	commentCountCache = sync.Map{}
-	userCache         = sync.Map{}
-	postCache         = make([]Post, 0, 10000)
-	postCacheMutex    = sync.Mutex{}
+	userCache      = sync.Map{}
+	postCache      = make([]Post, 0, 10000)
+	postCacheMutex = sync.Mutex{}
 )
 
 // CommentQueue は投稿IDごとの全コメントを保持
@@ -334,8 +346,49 @@ func getTemplPath(filename string) string {
 	return path.Join("templates", filename)
 }
 
+// 内部用のinitialize処理
+func getInternalInitialize(w http.ResponseWriter, r *http.Request) {
+	// キャッシュのクリア
+	postCacheMutex.Lock()
+	postCache = make([]Post, 0, 10000)
+	postCacheMutex.Unlock()
+
+	// コメントキューのクリア
+	postCommentQueues = sync.Map{}
+
+	// ユーザーキャッシュのクリア
+	userCache = sync.Map{}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func getInitialize(w http.ResponseWriter, r *http.Request) {
 	dbInitialize()
+
+	// キャッシュのクリア
+	postCacheMutex.Lock()
+	postCache = make([]Post, 0, 10000)
+	postCacheMutex.Unlock()
+
+	// コメントキューのクリア
+	postCommentQueues = sync.Map{}
+
+	// ユーザーキャッシュのクリア
+	userCache = sync.Map{}
+
+	// Web2の内部initializeを呼び出し
+	go func() {
+		resp, err := http.Get(fmt.Sprintf("http://%s:8080/internal/initialize", internalIPs.Web2))
+		if err != nil {
+			log.Printf("Failed to initialize web2: %v", err)
+		} else {
+			resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				log.Printf("Web2 initialize returned non-200 status: %d", resp.StatusCode)
+			}
+		}
+	}()
+
 	go func() {
 		if _, err := http.Get("http://127.0.0.1:9000/api/group/collect"); err != nil {
 			log.Printf("failed to communicate with pprotein: %v", err)
@@ -686,6 +739,88 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 	}{p, me})
 }
 
+// 新しい構造体を追加
+type InternalPostRequest struct {
+	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
+	Mime      string    `json:"mime"`
+	Imgdata   []byte    `json:"imgdata"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// 内部APIのエンドポイントを追加
+func postInternalNewPost(w http.ResponseWriter, r *http.Request) {
+	// 内部APIなので、Web1からのリクエストのみ許可
+	clientIP := strings.Split(r.RemoteAddr, ":")[0]
+	if clientIP != internalIPs.Web1 {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// リクエストボディの読み取り
+	var req InternalPostRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// postCacheに追加
+	postCacheMutex.Lock()
+	defer postCacheMutex.Unlock()
+	postCache = append(postCache, Post{
+		ID:        req.ID,
+		UserID:    req.UserID,
+		Mime:      req.Mime,
+		Imgdata:   req.Imgdata,
+		Body:      req.Body,
+		CreatedAt: req.CreatedAt,
+	})
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// 新しい構造体を追加
+type InternalCommentRequest struct {
+	ID        int       `json:"id"`
+	PostID    int       `json:"post_id"`
+	UserID    int       `json:"user_id"`
+	Comment   string    `json:"comment"`
+	CreatedAt time.Time `json:"created_at"`
+	User      User      `json:"user"`
+}
+
+// 内部APIのエンドポイントを追加
+func postInternalNewComment(w http.ResponseWriter, r *http.Request) {
+	// 内部APIなので、Web1からのリクエストのみ許可
+	clientIP := strings.Split(r.RemoteAddr, ":")[0]
+	if clientIP != internalIPs.Web1 {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// リクエストボディの読み取り
+	var req InternalCommentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// コメントキューに追加
+	queue := getCommentQueue(req.PostID)
+	queue.AddComment(Comment{
+		ID:        req.ID,
+		PostID:    req.PostID,
+		UserID:    req.UserID,
+		Comment:   req.Comment,
+		CreatedAt: req.CreatedAt,
+		User:      req.User,
+	})
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// postIndex関数を修正
 func postIndex(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
 	if !isLogin(me) {
@@ -778,6 +913,38 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	postCacheMutex.Lock()
 	defer postCacheMutex.Unlock()
 	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body")})
+	// Web2に投稿を通知（同期的）
+	newPost := InternalPostRequest{
+		ID:        int(pid),
+		UserID:    me.ID,
+		Mime:      mime,
+		Imgdata:   filedata,
+		Body:      r.FormValue("body"),
+		CreatedAt: time.Now(),
+	}
+
+	jsonData, err := json.Marshal(newPost)
+	if err != nil {
+		log.Printf("Failed to marshal post data: %v", err)
+	} else {
+		resp, err := http.Post(
+			fmt.Sprintf("http://%s:8080/internal/post", internalIPs.Web2),
+			"application/json",
+			bytes.NewBuffer(jsonData),
+		)
+		if err != nil {
+			log.Printf("Failed to notify web2: %v", err)
+		} else {
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				log.Printf("Web2 returned non-200 status: %d", resp.StatusCode)
+			}
+		}
+	}
+
+	postCacheMutex.Lock()
+	defer postCacheMutex.Unlock()
+	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body"), CreatedAt: time.Now()})
 
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
 }
@@ -854,7 +1021,36 @@ func postComment(w http.ResponseWriter, r *http.Request) {
 	id, _ := result.LastInsertId()
 	comment.ID = int(id)
 
-	// キューに新しいコメントを追加
+	// Web2にコメントを通知（同期的）
+	newComment := InternalCommentRequest{
+		ID:        comment.ID,
+		PostID:    comment.PostID,
+		UserID:    comment.UserID,
+		Comment:   comment.Comment,
+		CreatedAt: comment.CreatedAt,
+		User:      comment.User,
+	}
+
+	jsonData, err := json.Marshal(newComment)
+	if err != nil {
+		log.Printf("Failed to marshal comment data: %v", err)
+	} else {
+		resp, err := http.Post(
+			fmt.Sprintf("http://%s:8080/internal/comment", internalIPs.Web2),
+			"application/json",
+			bytes.NewBuffer(jsonData),
+		)
+		if err != nil {
+			log.Printf("Failed to notify web2: %v", err)
+		} else {
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				log.Printf("Web2 returned non-200 status: %d", resp.StatusCode)
+			}
+		}
+	}
+
+	// 自身のキューにコメントを追加
 	queue := getCommentQueue(postID)
 	queue.AddComment(comment)
 
@@ -986,6 +1182,11 @@ func main() {
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		http.FileServer(http.Dir("../public")).ServeHTTP(w, r)
 	})
+
+	// 内部APIのルートを追加
+	r.Get("/internal/initialize", getInternalInitialize)
+	r.Post("/internal/post", postInternalNewPost)
+	r.Post("/internal/comment", postInternalNewComment)
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
