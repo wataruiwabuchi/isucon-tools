@@ -13,7 +13,6 @@ ansible-playbook file_collecter.yml
 ```
 ansible-playbook webapp.yml
 ```
-.yml ファイルを実行するときは inventory.yml を指定する
 
 デプロイ
 ```
