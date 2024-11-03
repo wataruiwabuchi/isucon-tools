@@ -1,0 +1,18 @@
+# 共通の SSH 設定
+Host *
+    User isucon
+    IdentityFile ~/.ssh/id_rsa
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    ServerAliveInterval 10
+    TCPKeepAlive yes
+    ControlMaster auto
+    ControlPath /tmp/.ssh-%r@%h:%p
+    ControlPersist 10m
+
+# サーバー固有の設定（IPアドレスのみ）
+Host web1
+    HostName xxx.xxx.xxx.xxx
+
+Host web2
+    HostName xxx.xxx.xxx.xxx

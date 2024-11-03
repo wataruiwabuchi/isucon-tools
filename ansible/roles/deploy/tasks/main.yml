@@ -1,5 +1,14 @@
 ---
+
+# NOTE アプリのバイナリが busy となるので最初に止める
+- name: Stop related services
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop: "{{ service_names }}"
+
 # NOTE リモート側の owner などを維持するために inplace を使おうとしたが synchronize では使えないらしいので直接実行
+#   cf. <https://github.com/ansible/ansible-modules-core/issues/727>
 # NOTE ファイルとディレクトリを混在させながらループ処理するのは末尾の / の問題などで難しかったのでいっそのことフルパスであることを活かしてルートに直接配布
 - name: Synchronize files using rsync with advanced options
   command: >
@@ -8,11 +17,14 @@
     --inplace
     --compress
     --recursive
+    --rsync-path="sudo rsync"
+    -e "ssh -F {{ playbook_dir }}/ssh_config"
     {{ local_collection_path }}/
-    {{ ansible_user }}@{{ ansible_host }}:/
+    {{ inventory_hostname }}:/
   delegate_to: localhost
   become: no
 
+# NOTE ローカルの app が rsync で同期されてしまっているとビルドに失敗するかも
 - name: Build the application
   shell: |
     source ~/.profile || true
