@@ -6,17 +6,18 @@ inventory.yml にインスタンスのIPアドレスを記載する
 
 git での管理対象のファイルをサーバーから収集
 ```
-ansible-playbook -i inventory.yml file_collecter.yml
+ansible-playbook file_collecter.yml
 ```
 
 初期設定
 ```
-ansible-playbook -i inventory.yml webapp.yml
+ansible-playbook webapp.yml
 ```
+.yml ファイルを実行するときは inventory.yml を指定する
 
 デプロイ
 ```
-ansible-playbook -i inventory.yml deploy.yml
+ansible-playbook deploy.yml
 ```
 
 # Tips
