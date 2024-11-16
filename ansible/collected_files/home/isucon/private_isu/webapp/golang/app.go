@@ -72,6 +72,11 @@ type Post struct {
 	CSRFToken    string
 }
 
+type Image struct {
+	Mime    string
+	Imgdata []byte
+}
+
 type Comment struct {
 	ID        int       `db:"id"`
 	PostID    int       `db:"post_id"`
