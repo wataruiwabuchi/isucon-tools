@@ -326,6 +326,16 @@ func mimeToExt(mime string) string {
 	return ext
 }
 
+var fmap_ = template.FuncMap{
+	"imageURL": imageURL,
+}
+
+var templates = template.Must(template.New("layout.html").Funcs(fmap_).ParseFiles(
+	getTemplPath("layout.html"),
+	getTemplPath("post_id.html"),
+	getTemplPath("post.html"),
+))
+
 func isLogin(u User) bool {
 	return u.ID != 0
 }
@@ -730,15 +740,7 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 
 	me := getSessionUser(r)
 
-	fmap := template.FuncMap{
-		"imageURL": imageURL,
-	}
-
-	template.Must(template.New("layout.html").Funcs(fmap).ParseFiles(
-		getTemplPath("layout.html"),
-		getTemplPath("post_id.html"),
-		getTemplPath("post.html"),
-	)).Execute(w, struct {
+	templates.Execute(w, struct {
 		Post Post
 		Me   User
 	}{p, me})
