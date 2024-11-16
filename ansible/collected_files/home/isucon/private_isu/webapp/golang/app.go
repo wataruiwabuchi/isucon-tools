@@ -308,16 +308,22 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 }
 
 func imageURL(p Post) string {
+	ext := mimeToExt(p.Mime)
+
+	return "/image/" + strconv.Itoa(p.ID) + ext
+}
+
+func mimeToExt(mime string) string {
 	ext := ""
-	if p.Mime == "image/jpeg" {
+	if mime == "image/jpeg" {
 		ext = ".jpg"
-	} else if p.Mime == "image/png" {
+	} else if mime == "image/png" {
 		ext = ".png"
-	} else if p.Mime == "image/gif" {
+	} else if mime == "image/gif" {
 		ext = ".gif"
 	}
 
-	return "/image/" + strconv.Itoa(p.ID) + ext
+	return ext
 }
 
 func isLogin(u User) bool {
@@ -893,7 +899,7 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ext := strings.Split(mime, "/")[1]
+	ext := mimeToExt(strings.Split(mime, "/")[1])
 	f, err := os.Create(fmt.Sprintf("/home/isucon/private_isu/webapp/images/%d.%s", pid, ext))
 	if err != nil {
 		log.Print(err)
