@@ -915,7 +915,7 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 
 	postCacheMutex.Lock()
 	defer postCacheMutex.Unlock()
-	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Body: r.FormValue("body")})
+	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Mime: mime, Body: r.FormValue("body")})
 
 	// Web2に投稿を通知（同期的）
 	newPost := InternalPostRequest{
