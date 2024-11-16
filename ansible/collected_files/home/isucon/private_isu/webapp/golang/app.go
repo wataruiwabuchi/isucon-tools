@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -73,11 +72,6 @@ type Post struct {
 	CSRFToken    string
 }
 
-type Image struct {
-	Mime    string
-	Imgdata []byte
-}
-
 type Comment struct {
 	ID        int       `db:"id"`
 	PostID    int       `db:"post_id"`
@@ -91,7 +85,6 @@ var (
 	userCache      = sync.Map{}
 	postCache      = make([]Post, 0, 10000)
 	postCacheMutex = sync.Mutex{}
-	imageCache     = sync.Map{}
 )
 
 // CommentQueue は投稿IDごとの全コメントを保持
@@ -918,11 +911,6 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	defer postCacheMutex.Unlock()
 	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Body: r.FormValue("body")})
 
-	imageCache.Store(int(pid), Image{
-		Mime:    mime,
-		Imgdata: filedata,
-	})
-
 	// Web2に投稿を通知（同期的）
 	newPost := InternalPostRequest{
 		ID:        int(pid),
@@ -952,46 +940,6 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
-}
-
-func getImage(w http.ResponseWriter, r *http.Request) {
-	pidStr := r.PathValue("id")
-	pid, err := strconv.Atoi(pidStr)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	ext := r.PathValue("ext")
-
-	var image Image
-	if imageCache, ok := imageCache.Load(pid); ok {
-		image = imageCache.(Image)
-	} else {
-		imageBytes, err := ioutil.ReadFile(fmt.Sprintf("/home/isucon/private_isu/webapp/images/%d.%s", pid, ext))
-		if err != nil {
-			log.Print(err)
-			return
-		}
-		image = Image{
-			Mime:    ext,
-			Imgdata: imageBytes,
-		}
-	}
-
-	if ext == "jpg" && image.Mime == "image/jpeg" ||
-		ext == "png" && image.Mime == "image/png" ||
-		ext == "gif" && image.Mime == "image/gif" {
-		w.Header().Set("Content-Type", image.Mime)
-		_, err := w.Write(image.Imgdata)
-		if err != nil {
-			// log.Print(err)
-			return
-		}
-		return
-	}
-
-	w.WriteHeader(http.StatusNotFound)
 }
 
 func postComment(w http.ResponseWriter, r *http.Request) {
@@ -1186,7 +1134,6 @@ func main() {
 	r.Get("/posts", getPosts)
 	r.Get("/posts/{id}", getPostsID)
 	r.Post("/", postIndex)
-	r.Get("/image/{id}.{ext}", getImage)
 	r.Post("/comment", postComment)
 	r.Get("/admin/banned", getAdminBanned)
 	r.Post("/admin/banned", postAdminBanned)
