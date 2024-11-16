@@ -942,8 +942,6 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	postCacheMutex.Lock()
-	defer postCacheMutex.Unlock()
 	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body"), CreatedAt: time.Now()})
 
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
