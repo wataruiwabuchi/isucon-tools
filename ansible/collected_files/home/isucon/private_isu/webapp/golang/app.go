@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -90,6 +91,7 @@ var (
 	userCache      = sync.Map{}
 	postCache      = make([]Post, 0, 10000)
 	postCacheMutex = sync.Mutex{}
+	imageCache     = sync.Map{}
 )
 
 // CommentQueue は投稿IDごとの全コメントを保持
@@ -960,21 +962,28 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, ok := lo.Find(postCache, func(p Post) bool {
-		return p.ID == pid
-	})
-	if !ok {
-		// log.Print("Failed to get post cache")
-		return
-	}
-
 	ext := r.PathValue("ext")
 
-	if ext == "jpg" && post.Mime == "image/jpeg" ||
-		ext == "png" && post.Mime == "image/png" ||
-		ext == "gif" && post.Mime == "image/gif" {
-		w.Header().Set("Content-Type", post.Mime)
-		_, err := w.Write(post.Imgdata)
+	var image Image
+	if imageCache, ok := imageCache.Load(pid); ok {
+		image = imageCache.(Image)
+	} else {
+		imageBytes, err := ioutil.ReadFile(fmt.Sprintf("/home/isucon/private_isu/webapp/images/%d.%s", pid, ext))
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		image = Image{
+			Mime:    ext,
+			Imgdata: imageBytes,
+		}
+	}
+
+	if ext == "jpg" && image.Mime == "image/jpeg" ||
+		ext == "png" && image.Mime == "image/png" ||
+		ext == "gif" && image.Mime == "image/gif" {
+		w.Header().Set("Content-Type", image.Mime)
+		_, err := w.Write(image.Imgdata)
 		if err != nil {
 			// log.Print(err)
 			return
