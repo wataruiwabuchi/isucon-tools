@@ -959,7 +959,7 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		return p.ID == pid
 	})
 	if !ok {
-		log.Print("Failed to get post cache")
+		// log.Print("Failed to get post cache")
 		return
 	}
 
@@ -971,7 +971,7 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", post.Mime)
 		_, err := w.Write(post.Imgdata)
 		if err != nil {
-			log.Print(err)
+			// log.Print(err)
 			return
 		}
 		return
