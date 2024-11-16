@@ -1,6 +1,7 @@
 # 使い方
 ## 初期設定
 inventory.yml にインスタンスのIPアドレスを記載する
+ssh_config.sample をコピーして ssh_config を作成する、中身の ip はインスタンスのIPアドレスにする
 
 ## 各種コマンド
 
