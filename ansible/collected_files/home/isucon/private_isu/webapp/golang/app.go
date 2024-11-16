@@ -63,7 +63,6 @@ type User struct {
 type Post struct {
 	ID           int       `db:"id"`
 	UserID       int       `db:"user_id"`
-	Imgdata      []byte    `db:"imgdata"`
 	Body         string    `db:"body"`
 	Mime         string    `db:"mime"`
 	CreatedAt    time.Time `db:"created_at"`
@@ -744,7 +743,6 @@ type InternalPostRequest struct {
 	ID        int       `json:"id"`
 	UserID    int       `json:"user_id"`
 	Mime      string    `json:"mime"`
-	Imgdata   []byte    `json:"imgdata"`
 	Body      string    `json:"body"`
 	CreatedAt time.Time `json:"created_at"`
 }
@@ -772,7 +770,6 @@ func postInternalNewPost(w http.ResponseWriter, r *http.Request) {
 		ID:        req.ID,
 		UserID:    req.UserID,
 		Mime:      req.Mime,
-		Imgdata:   req.Imgdata,
 		Body:      req.Body,
 		CreatedAt: req.CreatedAt,
 	})
@@ -912,13 +909,18 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 
 	postCacheMutex.Lock()
 	defer postCacheMutex.Unlock()
-	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Mime: mime, Imgdata: filedata, Body: r.FormValue("body")})
+	postCache = append(postCache, Post{ID: int(pid), UserID: me.ID, Body: r.FormValue("body")})
+
+	imageCache.Store(int(pid), Image{
+		Mime:    mime,
+		Imgdata: filedata,
+	})
+
 	// Web2に投稿を通知（同期的）
 	newPost := InternalPostRequest{
 		ID:        int(pid),
 		UserID:    me.ID,
 		Mime:      mime,
-		Imgdata:   filedata,
 		Body:      r.FormValue("body"),
 		CreatedAt: time.Now(),
 	}
