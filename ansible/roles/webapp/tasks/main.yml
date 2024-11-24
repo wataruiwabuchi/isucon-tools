@@ -1,6 +1,14 @@
 ---
 # TODO initial_setup.sh を見ながら追加したほうがよさそうな処理を追加
 
+# NOTE dpkg の停止周りでのエラーを防ぐために停止
+#   isucon なのでタスクの最後での restart はしないでおく
+- name: Stop unattended-upgrades
+  systemd:
+    name: unattended-upgrades
+    state: stopped
+    enabled: no
+
 - name: Tasks for add_github_ssh_keys
   include_tasks: add_github_ssh_keys.yml
 
