@@ -14,6 +14,7 @@
   loop: "{{ github_users }}"
   register: github_keys
 
+# TODO 最後のユーザの鍵しか残っていなそうなので修正
 - name: Add keys to authorized_keys
   blockinfile:
     path: "/home/{{ target_user }}/.ssh/authorized_keys"
