@@ -24,4 +24,6 @@
     dest: "{{ local_collection_path }}{{ item | dirname }}/"
     mode: pull
     recursive: yes
+    rsync_opts:
+      - "-e 'ssh -F {{ playbook_dir }}/ssh_config'"
   loop: "{{ managed_paths }}"
