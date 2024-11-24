@@ -17,23 +17,9 @@ all:
       - /etc/nginx/nginx.conf
       - /etc/nginx/sites-available/isucon.conf
       - /etc/mysql/mysql.conf.d/mysqld.cnf
-      - /home/isucon/private_isu/webapp/golang/templates/post_id.html
-      # - /home/isucon/private_isu/webapp/golang/templates/user.html
-      # - /home/isucon/private_isu/webapp/golang/templates/post.html
-      # - /home/isucon/private_isu/webapp/golang/templates/banned.html
-      # - /home/isucon/private_isu/webapp/golang/templates/posts.html
-      # - /home/isucon/private_isu/webapp/golang/templates/login.html
-      # - /home/isucon/private_isu/webapp/golang/templates/layout.html
-      # - /home/isucon/private_isu/webapp/golang/templates/index.html
-      # - /home/isucon/private_isu/webapp/golang/templates/register.html
-      - /home/isucon/private_isu/webapp/golang/Makefile
-      - /home/isucon/private_isu/webapp/golang/.gitignore
-      - /home/isucon/private_isu/webapp/golang/app.go
-      - /home/isucon/private_isu/webapp/golang/go.sum
-      - /home/isucon/private_isu/webapp/golang/setup.sh
-      - /home/isucon/private_isu/webapp/golang/go.mod
-      - /home/isucon/private_isu/webapp/golang/Dockerfile
-    build_path: /home/isucon/private_isu/webapp/golang
+      - /home/isucon/webapp/go
+      - /home/isucon/webapp/sql
+    build_path: /home/isucon/webapp/go
 
     # ローカルでの収集ファイルの保存先
     local_collection_path: "{{ playbook_dir }}/collected_files"
@@ -46,4 +32,4 @@ all:
     service_names:
       - mysql
       - nginx
-      - isu-go
+      - isupipe-go
