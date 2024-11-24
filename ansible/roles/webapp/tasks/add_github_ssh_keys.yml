@@ -15,9 +15,10 @@
   register: github_keys
 
 - name: Add keys to authorized_keys
-  lineinfile:
+  blockinfile:
     path: "/home/{{ target_user }}/.ssh/authorized_keys"
-    line: "{{ item.content }}"
+    block: |
+      {{ item.content }}
     create: yes
     mode: "0600"
     owner: "{{ target_user }}"
