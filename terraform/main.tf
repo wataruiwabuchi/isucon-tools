@@ -68,8 +68,8 @@ resource "aws_instance" "isucon" {
   # count = 3 # 基本的にはベンチ含めて 4 台
   count                = var.instance_count
   ami                  = var.ami_id
-  # instance_type = "c5.large"  # 基本的には c5.large
-  instance_type        = "t3.small"
+  instance_type = "c5.large"  # 基本的には c5.large
+  # instance_type        = "t3.medium"
   iam_instance_profile = aws_iam_instance_profile.isucon_profile.name
 
   subnet_id                   = aws_subnet.public.id
@@ -131,7 +131,16 @@ resource "aws_security_group" "isucon" {
     description = "Allow all TCP inbound traffic"
   }
 
-  # 全てのアウトバウンドトラフィックを許可
+  # VPC内の全トラフィックを許可するインバウンドルールを追加
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["10.0.1.0/24"]
+    description = "Allow all traffic within VPC"
+  }
+
+  # アウトバウンドトラフィックの許可
   egress {
     from_port   = 0
     to_port     = 0
