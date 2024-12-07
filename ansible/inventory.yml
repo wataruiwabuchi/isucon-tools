@@ -12,6 +12,15 @@ all:
     max_parallel_jobs: 10
     ansible_user: isucon
 
+    # ローカルでの収集ファイルの保存先
+    local_collection_path: "{{ playbook_dir }}/collected_files"
+
+    # ファイルのデフォルトモード
+    default_file_mode: '0644'
+    default_dir_mode: '0755'
+
+    # 以下は isucon ごとに変更する可能性があるリスト
+
     # 収集および配布するファイルのリスト
     # 現状ファイルしか指定できないので全部列挙する
     managed_paths:
@@ -21,13 +30,6 @@ all:
       - /home/isucon/webapp/go
       - /home/isucon/webapp/sql
     build_path: /home/isucon/webapp/go
-
-    # ローカルでの収集ファイルの保存先
-    local_collection_path: "{{ playbook_dir }}/collected_files"
-
-    # ファイルのデフォルトモード
-    default_file_mode: '0644'
-    default_dir_mode: '0755'
 
     # アプリケーション関連の変数
     service_names:
