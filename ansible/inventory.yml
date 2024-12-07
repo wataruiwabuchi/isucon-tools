@@ -5,6 +5,7 @@ all:
       hosts:
         web1: {}
         web2: {}
+        web3: {}
     db:
       hosts: {}
   vars:

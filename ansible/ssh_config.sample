@@ -16,3 +16,6 @@ Host web1
 
 Host web2
     HostName xxx.xxx.xxx.xxx
+
+Host web3
+    HostName xxx.xxx.xxx.xxx
