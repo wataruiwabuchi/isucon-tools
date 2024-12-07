@@ -34,3 +34,6 @@ all:
       - mysql
       - nginx
       - isupipe-go
+
+    github_users:
+      - wataruiwabuchi

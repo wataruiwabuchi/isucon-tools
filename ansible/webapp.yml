@@ -3,7 +3,5 @@
   become: yes
   vars:
     target_user: isucon
-    github_users:
-      - wataruiwabuchi
   roles:
     - role: webapp
