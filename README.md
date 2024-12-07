@@ -1,5 +1,11 @@
 # isucon_tools
 
+# 戦略
+- 勝手に手を動かし出さない、今取り組むべきボトルネックであることを同意をとってから手をつける
+- 15 分、重そうでも 30 分で詰まったら助けを求める
+  - 人を呼ぶことで早くなりそうなら呼ぶ
+- お昼あたりにマニュアル、プロファイル、エンドポイントあたりを眺めて問題の問題感を掴む
+
 # 初動
 1. サーバー立ち上げ
 2. ssh 確認
@@ -7,10 +13,11 @@
 4. inventory.yml の設定
 5. ansible-playbook file_collector.yml
 6. ansible-playbook webapp.yml
-7. プロファイルが動作することを確認する
+7. プロファイルが動作することを確認する(pprotein の設定は web から変える)
 8. ベンチマーク
 9. app 1 台、db 1 台に分散
-10. ベンチマーク
+10. alp の設定をまとめる
+11. ベンチマーク
 
 - [pprotein の組み込み](https://github.com/narusejun/isucon13-final/commit/3210c87c83158010f27ca0d54e1071315d1b3fb1)
 
