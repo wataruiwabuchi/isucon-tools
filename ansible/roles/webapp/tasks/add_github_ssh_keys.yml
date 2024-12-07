@@ -14,15 +14,14 @@
   loop: "{{ github_users }}"
   register: github_keys
 
-# TODO 最後のユーザの鍵しか残っていなそうなので修正
-- name: Add keys to authorized_keys
+- name: Add all keys to authorized_keys at once
   blockinfile:
     path: "/home/{{ target_user }}/.ssh/authorized_keys"
     block: |
+      {% for item in github_keys.results if item.content|length > 0 %}
       {{ item.content }}
+      {% endfor %}
     create: yes
     mode: "0600"
     owner: "{{ target_user }}"
     group: "{{ target_user }}"
-  loop: "{{ github_keys.results }}"
-  when: item.content | length > 0
